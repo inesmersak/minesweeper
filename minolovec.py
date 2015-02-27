@@ -6,6 +6,8 @@ class Minesweeper():
         self.velikost = velikost
         self.mine = mine
         self.polje = [[0 for x in range(self.velikost)] for y in range(self.velikost)]
+        self.odkrito = [['-' for x in range(self.velikost)] for y in range(self.velikost)]
+        self.preostale_mine = self.mine
 
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
@@ -27,23 +29,47 @@ class Minesweeper():
             self.spremeni_stevilko_polj(x, y)
             i -= 1
 
-    def prikazi_celotno_polje(self):
+    def prikazi_celotno_polje(self, odkrito=False):
         """ Prikaze celotno polje min in praznih kvadratkov. """
         niz = ''
-        for x in self.polje:
+        if odkrito: data = self.polje
+        else: data = self.odkrito
+        for x in data:
             niz += '|'
             for i in range(self.velikost):
                 niz += ' {0} |'.format(x[i])
             niz += '\n'
         print(niz)
 
-    def vrni_kvadratek(self, vrstica, stolpec):
-        """ Vrne vrednost kvadratka, ki se nahaja v dani vrstici in stolpcu. """
-        kvadratek = self.polje[vrstica][stolpec]
-        return kvadratek
+    def posodobi(self, x, y, m):
+        if m:
+            self.odkrito[x][y] = 'f'
+            self.preostale_mine -= 1
+        else:
+            if self.polje[x][y] == 'x':
+                return False
+            else:
+                self.odkrito[x][y] = self.polje[x][y]
+        return True
+
+    def igra(self):
+        while True:
+            self.prikazi_celotno_polje()
+            print("Preostale mine:",self.mine)
+            v = int(input("Vrstica: ")) - 1
+            s = int(input("Stolpec: ")) - 1
+            m = input("(m)ina / (p)razno: ")
+            if m == 'm': m = 1
+            else: m = 0
+            poteka = self.posodobi(v, s, m)
+            if not poteka:
+                self.prikazi_celotno_polje(odkrito=True)
+                print('Zal ste naleteli na mino!')
+                break
 
 
-igrica = Minesweeper(10, 10)
+igrica = Minesweeper(5, 5)
 igrica.napolni()
-igrica.prikazi_celotno_polje()
+igrica.prikazi_celotno_polje(odkrito=True)
+igrica.igra()
 
