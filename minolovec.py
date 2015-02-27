@@ -9,19 +9,10 @@ class Minesweeper():
 
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
-        for z in range(x-1, max(x+2, self.velikost)):
-            for w in range(y-1, max(y+2, self.velikost)):
-
-        if x-1 >= 0:
-            self.polje[x-1][y] += 1
-            if y-1 >= 0: self.polje[x-1][y-1] += 1
-            if y+1 < self.velikost: self.polje[x-1][y+1] += 1
-        if x+1 < self.velikost:
-            self.polje[x+1][y] += 1
-            if y+1 < self.velikost: self.polje[x+1][y+1] += 1
-            if y-1 >= 0: self.polje[x+1][y-1] += 1
-        if y-1 >= 0: self.polje[x][y-1] += 1
-        if y+1 < self.velikost: self.polje[x][y+1] += 1
+        for z in range(max(0, x-1), min(x+2, self.velikost)):
+            for w in range(max(0, y-1), min(y+2, self.velikost)):
+                if self.polje[z][w] != 'x':
+                    self.polje[z][w] += 1
 
     def napolni(self):
         """ Nakljucno napolni igralno polje s 'self.mine' stevilom min. Mine so oznacene z x, prazni kvadratki z 0. """
@@ -33,6 +24,7 @@ class Minesweeper():
                 x = random.randint(0, self.velikost-1)
                 y = random.randint(0, self.velikost-1)
             self.polje[x][y] = 'x'
+            self.spremeni_stevilko_polj(x, y)
             i -= 1
 
     def prikazi_celotno_polje(self):
