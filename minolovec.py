@@ -5,8 +5,8 @@ class Minesweeper():
     def __init__(self, velikost, mine):
         self.velikost = velikost
         self.mine = mine
-        self.polje = [[0 for x in range(self.velikost)] for y in range(self.velikost)]
-        self.odkrito = [['-' for x in range(self.velikost)] for y in range(self.velikost)]
+        self.polje = [[0 for _ in range(self.velikost)] for _ in range(self.velikost)]
+        self.odkrito = [['-' for _ in range(self.velikost)] for _ in range(self.velikost)]
         self.preostale_mine = self.mine
 
     def spremeni_stevilko_polj(self, x, y):
@@ -55,12 +55,11 @@ class Minesweeper():
     def igra(self):
         while True:
             self.prikazi_celotno_polje()
-            print("Preostale mine:",self.mine)
+            print("Preostale mine:", self.mine)
             v = int(input("Vrstica: ")) - 1
             s = int(input("Stolpec: ")) - 1
             m = input("(m)ina / (p)razno: ")
-            if m == 'm': m = 1
-            else: m = 0
+            m = (m == 'm')
             poteka = self.posodobi(v, s, m)
             if not poteka:
                 self.prikazi_celotno_polje(odkrito=True)
@@ -72,4 +71,3 @@ igrica = Minesweeper(5, 5)
 igrica.napolni()
 igrica.prikazi_celotno_polje(odkrito=True)
 igrica.igra()
-
