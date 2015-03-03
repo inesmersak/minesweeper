@@ -8,27 +8,23 @@ class Polje():
         self.y = y
         self.vrednost = vrednost
         self.odprto = False
-        self.prikaz = '_'
+        self.prikaz = None
         self.flagged = False
 
     def __str__(self):
         return str(self.prikaz)
 
     def odpri(self):
-        self.prikaz = self.vrednost
-        self.odprto = True
-
-    def oznaci(self):
-        if not self.odprto:
-            self.prikaz = 'f'
-            self.flagged = True
+        if not self.flagged and not self.odprto:
+            self.prikaz = self.vrednost
+            self.odprto = True
             return True
         return False
 
-    def odznaci(self):
+    def oznaci(self):
         if not self.odprto:
-            self.prikaz = '_'
-            self.flagged = False
+            self.prikaz = 'f' if '_' == self.prikaz else '_'
+            self.flagged = True if not self.flagged else False
             return True
         return False
 
@@ -73,6 +69,9 @@ class Minesweeper():
         self.platno.bind("<Button-1>", self.levi_klik)
         self.platno.bind("<Button-3>", self.desni_klik)
 
+        self.napolni()
+        print(self.polje)
+
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
         for z in range(max(0, x-1), min(x+2, self.velikost)):
@@ -107,12 +106,19 @@ class Minesweeper():
     def levi_klik(self, klik):
         y = klik.x // self.kvadratek
         x = klik.y // self.kvadratek
-        print(x, y)
+        odpr = self.polje[x][y].odpri()
+        if odpr:
+            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
+                                    (self.kvadratek // 2), text=self.polje[x][y].vrednost)
 
     def desni_klik(self, klik):
         y = klik.x // self.kvadratek
         x = klik.y // self.kvadratek
-        print(x, y)
+        ozn = self.polje[x][y].oznaci()
+        if ozn:
+            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
+                                    (self.kvadratek // 2), text='f')
+            print(self.platno.find_closest(klik.x, klik.y))
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
