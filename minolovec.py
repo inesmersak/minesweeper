@@ -10,6 +10,7 @@ class Polje():
         self.odprto = False
         self.prikaz = None
         self.flagged = False
+        # self.id = None
 
     def __str__(self):
         return str(self.prikaz)
@@ -38,7 +39,7 @@ class Minesweeper():
         self.kvadratek = 30
         self.mine = mine
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
-        self.preostale_mine = self.mine
+        self.preostale_mine = IntVar(value=self.mine)
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
 
@@ -59,10 +60,12 @@ class Minesweeper():
         Label(okvir, textvariable=self.zmage).grid(row=0, column=1, sticky='W')
         Label(okvir, text='Porazi: ').grid(row=1, column=0)
         Label(okvir, textvariable=self.porazi).grid(row=1, column=1, sticky='W')
+        Label(okvir, text='Preostale mine: ').grid(row=2, column=0, sticky='S')
+        Label(okvir, textvariable=self.preostale_mine).grid(row=2, column=1, sticky='WS')
 
         self.platno = Canvas(okvir, width=self.velikost*self.kvadratek, height=self.velikost*self.kvadratek,
                              background='#FFFFFF')
-        self.platno.grid(row=2, column=0, columnspan=2)
+        self.platno.grid(row=3, column=0, columnspan=2)
         for i in range(1, self.velikost):
             self.platno.create_line(i*self.kvadratek, 0, i*self.kvadratek, self.velikost*self.kvadratek)
             self.platno.create_line(0, i*self.kvadratek, self.velikost*self.kvadratek, i*self.kvadratek)
@@ -106,19 +109,35 @@ class Minesweeper():
     def levi_klik(self, klik):
         y = klik.x // self.kvadratek
         x = klik.y // self.kvadratek
+        self.narisi_polje(x, y)
+        self.odpri_blok((x, y))
+
+    def desni_klik(self, klik):
+        y = klik.x // self.kvadratek
+        x = klik.y // self.kvadratek
+        self.narisi_mino(x, y)
+
+    def narisi_polje(self, x, y):
         odpr = self.polje[x][y].odpri()
         if odpr:
             self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
                                     (self.kvadratek // 2), text=self.polje[x][y].vrednost)
 
-    def desni_klik(self, klik):
-        y = klik.x // self.kvadratek
-        x = klik.y // self.kvadratek
+    def narisi_mino(self, x, y):
+        flag = self.polje[x][y].flagged
         ozn = self.polje[x][y].oznaci()
         if ozn:
-            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                    (self.kvadratek // 2), text='f')
-            print(self.platno.find_closest(klik.x, klik.y))
+            mine = self.preostale_mine.get()
+            if not flag:
+                self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
+                                        (self.kvadratek // 2), text='f')
+                self.preostale_mine.set(mine - 1)
+
+            else:
+                tag = self.platno.find_enclosed(y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
+                                                (x + 1) * self.kvadratek)
+                self.platno.delete(tag)
+                self.preostale_mine.set(mine + 1)
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
@@ -127,28 +146,29 @@ class Minesweeper():
         odpri = [koord]
         while odpri:
             x, y = odpri.pop()
-            self.polje[x][y].odpri()
+            self.narisi_polje(x, y)
+            # self.polje[x][y].odpri()
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x-1), min(x+2, self.velikost)):
                     for j in range(max(0, y-1), min(y+2, self.velikost)):
                         if not self.polje[i][j].odprto:
                             odpri.append((i, j))
 
-    def posodobi(self, x, y, m):
-        """ Sprejme koordinate, kamor je kliknil uporabnik, in ali je oznacil mino ali ne ter posodobi igro,
-        tako da odpre polja oziroma oznaci mino. """
-        if m:
-            ozn = self.polje[x][y].oznaci()
-            if ozn:
-                self.preostale_mine -= 1
-        else:
-            if self.polje[x][y].vrednost == 'x':
-                return False
-            else:
-                self.polje[x][y].odpri()
-                if self.polje[x][y].vrednost == 0:
-                    self.odpri_blok((x, y))
-        return True
+    # def posodobi(self, x, y, m):
+    #     """ Sprejme koordinate, kamor je kliknil uporabnik, in ali je oznacil mino ali ne ter posodobi igro,
+    #     tako da odpre polja oziroma oznaci mino. """
+    #     if m:
+    #         ozn = self.polje[x][y].oznaci()
+    #         if ozn:
+    #             self.preostale_mine -= 1
+    #     else:
+    #         if self.polje[x][y].vrednost == 'x':
+    #             return False
+    #         else:
+    #             self.polje[x][y].odpri()
+    #             if self.polje[x][y].vrednost == 0:
+    #                 self.odpri_blok((x, y))
+    #     return True
 
     def konec(self):
         for x in self.polje:
@@ -158,7 +178,13 @@ class Minesweeper():
         return True
 
     def nova_igra(self):
-        pass
+        self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
+        self.napolni()
+        self.preostale_mine = IntVar(value=self.mine)
+        self.platno.delete(ALL)
+        for i in range(1, self.velikost):
+            self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
+            self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
 
     def quit(self):
         pass
@@ -194,5 +220,5 @@ class Minesweeper():
 # igrica.prikazi_celotno_polje(odkrito=True)
 # igrica.igra()
 root = Tk()
-igrica = Minesweeper(root, 10, 3)
+igrica = Minesweeper(root, 10, 10)
 root.mainloop()
