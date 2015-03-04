@@ -42,7 +42,7 @@ class Minesweeper():
         self.preostale_mine = IntVar(value=self.mine)
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
-
+        self.gamestate = True
         # --- GUI ---
         master.title('Minolovec')
 
@@ -107,21 +107,27 @@ class Minesweeper():
     #     print(niz)
 
     def levi_klik(self, klik):
-        y = klik.x // self.kvadratek
-        x = klik.y // self.kvadratek
-        self.narisi_polje(x, y)
-        self.odpri_blok((x, y))
+        if self.gamestate:
+            y = klik.x // self.kvadratek
+            x = klik.y // self.kvadratek
+            self.narisi_polje(x, y)
+            self.odpri_blok((x, y))
+            self.preveri()
 
     def desni_klik(self, klik):
-        y = klik.x // self.kvadratek
-        x = klik.y // self.kvadratek
-        self.narisi_mino(x, y)
+        if self.gamestate:
+            y = klik.x // self.kvadratek
+            x = klik.y // self.kvadratek
+            self.narisi_mino(x, y)
+            self.preveri()
 
     def narisi_polje(self, x, y):
         odpr = self.polje[x][y].odpri()
         if odpr:
             self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
                                     (self.kvadratek // 2), text=self.polje[x][y].vrednost)
+            if self.polje[x][y].vrednost == 'x':
+                self.preveri(mina=True)
 
     def narisi_mino(self, x, y):
         flag = self.polje[x][y].flagged
@@ -177,14 +183,27 @@ class Minesweeper():
                     return False
         return True
 
+    def preveri(self, mina=False):
+        konec = self.konec()
+        if mina:
+            self.gamestate = False
+            self.porazi.set(self.porazi.get() + 1)
+        if konec:
+            self.gamestate = False
+            if self.preostale_mine.get() == 0:
+                self.zmage.set(self.zmage.get() + 1)
+            else:
+                self.porazi.set(self.porazi.get() + 1)
+
     def nova_igra(self):
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.napolni()
-        self.preostale_mine = IntVar(value=self.mine)
+        self.preostale_mine.set(self.mine)
         self.platno.delete(ALL)
         for i in range(1, self.velikost):
             self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
+        self.gamestate = True
 
     def quit(self):
         pass
