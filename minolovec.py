@@ -149,15 +149,17 @@ class Minesweeper():
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
         sosednja polja, ce je stevilo min v okolici polja 0. Postopek ponavlja za vsako polje, ki se odpre,
         dokler ne naleti na polje, ki ima v okolici kaksno mino. """
+        checked = [koord]
         odpri = [koord]
         while odpri:
             x, y = odpri.pop()
             self.narisi_polje(x, y)
+            checked.append((x, y))
             # self.polje[x][y].odpri()
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x-1), min(x+2, self.velikost)):
                     for j in range(max(0, y-1), min(y+2, self.velikost)):
-                        if not self.polje[i][j].odprto:
+                        if not self.polje[i][j].odprto and not (i, j) in checked:
                             odpri.append((i, j))
 
     # def posodobi(self, x, y, m):
