@@ -128,5 +128,5 @@ class Minesweeper():
 
 igrica = Minesweeper(5, 3)
 igrica.napolni()
-igrica.prikazi_celotno_polje(odkrito=True)
+#igrica.prikazi_celotno_polje(odkrito=True)
 igrica.igra()
