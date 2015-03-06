@@ -53,7 +53,7 @@ class Minesweeper():
         master.config(menu=menu)
         podmenu = Menu(menu)
         podmenu.add_command(label='Nova igra', command=self.nova_igra)
-        podmenu.add_command(label='Izhod', command=self.quit)
+        podmenu.add_command(label='Izhod', command=master.destroy)
         menu.add_cascade(label='File', menu=podmenu)
 
         Label(okvir, text='Zmage: ').grid(row=0, column=0)
@@ -121,6 +121,18 @@ class Minesweeper():
             self.narisi_mino(x, y)
             self.preveri()
 
+    def izracunaj_kvadratek(self, x, y):
+        return [y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
+                (x + 1) * self.kvadratek]
+
+    def izracunaj_sredino_kvadratka(self, x, y):
+        pass
+
+    def najdi_id(self, x, y):
+        """ Najde id vseh elementov na Canvasu znotraj kvadratka na koordinati x, y. """
+        kvad = self.izracunaj_kvadratek(x, y)
+        return self.platno.find_enclosed(*kvad)
+
     def narisi_polje(self, x, y):
         odpr = self.polje[x][y].odpri()
         if odpr:
@@ -135,30 +147,36 @@ class Minesweeper():
         if ozn:
             mine = self.preostale_mine.get()
             if not flag:
+                kvad = self.izracunaj_kvadratek(x, y)
+                self.platno.create_rectangle(*kvad, fill='#FF0000')
                 self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                        (self.kvadratek // 2), text='f')
+                                        (self.kvadratek // 2), text='f', fill='#FFFFFF')
                 self.preostale_mine.set(mine - 1)
 
             else:
-                tag = self.platno.find_enclosed(y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
-                                                (x + 1) * self.kvadratek)
-                self.platno.delete(tag)
+                tag = self.najdi_id(x, y)
+                for t in tag:
+                    print(t)
+                    self.platno.delete(t)
+                self.platno.delete(self.platno.find_closest(y * self.kvadratek + (self.kvadratek // 2),
+                                                            x * self.kvadratek + (self.kvadratek // 2)))
                 self.preostale_mine.set(mine + 1)
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
         sosednja polja, ce je stevilo min v okolici polja 0. Postopek ponavlja za vsako polje, ki se odpre,
         dokler ne naleti na polje, ki ima v okolici kaksno mino. """
+        checked = [koord]
         odpri = [koord]
         while odpri:
             x, y = odpri.pop()
-            if not self.polje[x][y].flagged:
-                self.narisi_polje(x, y)
+            self.narisi_polje(x, y)
+            checked.append((x, y))
             # self.polje[x][y].odpri()
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x-1), min(x+2, self.velikost)):
                     for j in range(max(0, y-1), min(y+2, self.velikost)):
-                        if not self.polje[i][j].odprto:
+                        if not self.polje[i][j].odprto and not (i, j) in checked:
                             odpri.append((i, j))
 
     # def posodobi(self, x, y, m):
@@ -194,6 +212,10 @@ class Minesweeper():
             if self.preostale_mine.get() == 0:
                 self.zmage.set(self.zmage.get() + 1)
             else:
+                for vrs in self.polje:
+                    for obj in vrs:
+                        if obj.flagged and obj.vrednost != 'x':
+                            print(obj.x, obj.y, 'ni good')
                 self.porazi.set(self.porazi.get() + 1)
 
     def nova_igra(self):
@@ -205,9 +227,6 @@ class Minesweeper():
             self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
         self.gamestate = True
-
-    def quit(self):
-        pass
 
     # def igra(self):
     #     while True:
@@ -240,5 +259,5 @@ class Minesweeper():
 # igrica.prikazi_celotno_polje(odkrito=True)
 # igrica.igra()
 root = Tk()
-igrica = Minesweeper(root, 10, 10)
+igrica = Minesweeper(root, 15, 30)
 root.mainloop()
