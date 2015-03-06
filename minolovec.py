@@ -152,7 +152,8 @@ class Minesweeper():
         odpri = [koord]
         while odpri:
             x, y = odpri.pop()
-            self.narisi_polje(x, y)
+            if not self.polje[x][y].flagged:
+                self.narisi_polje(x, y)
             # self.polje[x][y].odpri()
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x-1), min(x+2, self.velikost)):
