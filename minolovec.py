@@ -92,6 +92,8 @@ class Minesweeper():
             self.preveri()
 
     def izracunaj_kvadratek(self, x, y):
+        """ Izracuna tocki v levem zgornjem kotu in desnem spodnjem kotu kvadratka, ki se nahaja v vrstici x in
+        stolpcu y. """
         return [y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
                 (x + 1) * self.kvadratek]
 
@@ -104,6 +106,7 @@ class Minesweeper():
         return self.platno.find_enclosed(*kvad)
 
     def narisi_mrezo(self):
+        """ Narise mrezo na Canvasu. """
         for i in range(1, self.velikost):
             self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
