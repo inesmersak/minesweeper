@@ -1,36 +1,6 @@
 from tkinter import *
+from classes import *
 import random
-
-
-class Polje():
-    def __init__(self, x, y, vrednost=0):
-        self.x = x
-        self.y = y
-        self.vrednost = vrednost
-        self.odprto = False
-        self.prikaz = None
-        self.flagged = False
-        # self.id = None
-
-    def __str__(self):
-        return str(self.prikaz)
-
-    def odpri(self):
-        if not self.flagged and not self.odprto:
-            self.prikaz = self.vrednost
-            self.odprto = True
-            return True
-        return False
-
-    def oznaci(self):
-        if not self.odprto:
-            self.prikaz = 'f' if '_' == self.prikaz else '_'
-            self.flagged = True if not self.flagged else False
-            return True
-        return False
-
-    def prikaz(self):
-        pass
 
 
 class Minesweeper():
@@ -43,6 +13,7 @@ class Minesweeper():
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
         self.gamestate = True
+
         # --- GUI ---
         master.title('Minolovec')
 
@@ -66,9 +37,7 @@ class Minesweeper():
         self.platno = Canvas(okvir, width=self.velikost*self.kvadratek, height=self.velikost*self.kvadratek,
                              background='#FFFFFF')
         self.platno.grid(row=3, column=0, columnspan=2)
-        for i in range(1, self.velikost):
-            self.platno.create_line(i*self.kvadratek, 0, i*self.kvadratek, self.velikost*self.kvadratek)
-            self.platno.create_line(0, i*self.kvadratek, self.velikost*self.kvadratek, i*self.kvadratek)
+        self.narisi_mrezo()
         self.platno.bind("<Button-1>", self.levi_klik)
         self.platno.bind("<Button-3>", self.desni_klik)
 
@@ -95,23 +64,24 @@ class Minesweeper():
             self.spremeni_stevilko_polj(x, y)
             i -= 1
 
-    # def prikazi_celotno_polje(self, odkrito=False):
-    #     """ Prikaze celotno polje min in praznih kvadratkov. """
-    #     niz = ''
-    #     for x in self.polje:
-    #         niz += '|'
-    #         for y in x:
-    #             n = y.vrednost if odkrito else str(y)
-    #             niz += ' {0} |'.format(n)
-    #         niz += '\n'
-    #     print(niz)
+    def prikazi_celotno_polje(self, odkrito=False):
+        """ Prikaze celotno polje min in praznih kvadratkov. """
+        niz = ''
+        for x in self.polje:
+            niz += '|'
+            for y in x:
+                n = y.vrednost if odkrito else str(y)
+                niz += ' {0} |'.format(n)
+            niz += '\n'
+        print(niz)
 
     def levi_klik(self, klik):
         if self.gamestate:
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
-            self.narisi_polje(x, y)
-            self.odpri_blok((x, y))
+            if not self.polje[x][y].flagged:
+                # self.narisi_polje(x, y) tega verjetno ne rabim
+                self.odpri_blok((x, y))
             self.preveri()
 
     def desni_klik(self, klik):
@@ -133,13 +103,16 @@ class Minesweeper():
         kvad = self.izracunaj_kvadratek(x, y)
         return self.platno.find_enclosed(*kvad)
 
+    def narisi_mrezo(self):
+        for i in range(1, self.velikost):
+            self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
+            self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
+
     def narisi_polje(self, x, y):
-        odpr = self.polje[x][y].odpri()
-        if odpr:
-            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                    (self.kvadratek // 2), text=self.polje[x][y].vrednost)
-            if self.polje[x][y].vrednost == 'x':
-                self.preveri(mina=True)
+        self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
+                                (self.kvadratek // 2), text=self.polje[x][y].vrednost, font=('Arial', 11, 'bold'))
+        if self.polje[x][y].vrednost == 'x':
+            self.preveri(mina=True)
 
     def narisi_mino(self, x, y):
         flag = self.polje[x][y].flagged
@@ -156,7 +129,7 @@ class Minesweeper():
             else:
                 tag = self.najdi_id(x, y)
                 for t in tag:
-                    print(t)
+                    # print(t)
                     self.platno.delete(t)
                 self.platno.delete(self.platno.find_closest(y * self.kvadratek + (self.kvadratek // 2),
                                                             x * self.kvadratek + (self.kvadratek // 2)))
@@ -170,30 +143,15 @@ class Minesweeper():
         odpri = [koord]
         while odpri:
             x, y = odpri.pop()
-            self.narisi_polje(x, y)
+            odpr = self.polje[x][y].odpri()
+            if odpr:
+                self.narisi_polje(x, y)
             checked.append((x, y))
-            # self.polje[x][y].odpri()
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x-1), min(x+2, self.velikost)):
                     for j in range(max(0, y-1), min(y+2, self.velikost)):
                         if not self.polje[i][j].odprto and not (i, j) in checked:
                             odpri.append((i, j))
-
-    # def posodobi(self, x, y, m):
-    #     """ Sprejme koordinate, kamor je kliknil uporabnik, in ali je oznacil mino ali ne ter posodobi igro,
-    #     tako da odpre polja oziroma oznaci mino. """
-    #     if m:
-    #         ozn = self.polje[x][y].oznaci()
-    #         if ozn:
-    #             self.preostale_mine -= 1
-    #     else:
-    #         if self.polje[x][y].vrednost == 'x':
-    #             return False
-    #         else:
-    #             self.polje[x][y].odpri()
-    #             if self.polje[x][y].vrednost == 0:
-    #                 self.odpri_blok((x, y))
-    #     return True
 
     def konec(self):
         for x in self.polje:
@@ -207,51 +165,25 @@ class Minesweeper():
         if mina:
             self.gamestate = False
             self.porazi.set(self.porazi.get() + 1)
-        if konec:
+        elif konec and self.preostale_mine.get() == 0:
             self.gamestate = False
-            if self.preostale_mine.get() == 0:
-                self.zmage.set(self.zmage.get() + 1)
-            else:
-                for vrs in self.polje:
-                    for obj in vrs:
-                        if obj.flagged and obj.vrednost != 'x':
-                            print(obj.x, obj.y, 'ni good')
-                self.porazi.set(self.porazi.get() + 1)
+            self.zmage.set(self.zmage.get() + 1)
+            # if self.preostale_mine.get() == 0:
+            #     self.zmage.set(self.zmage.get() + 1)
+            # else:
+            #     for vrs in self.polje:
+            #         for obj in vrs:
+            #             if obj.flagged and obj.vrednost != 'x':
+            #                 print(obj.x, obj.y, 'ni good')
+            #     self.porazi.set(self.porazi.get() + 1)
 
     def nova_igra(self):
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.napolni()
         self.preostale_mine.set(self.mine)
         self.platno.delete(ALL)
-        for i in range(1, self.velikost):
-            self.platno.create_line(i * self.kvadratek, 0, i * self.kvadratek, self.velikost * self.kvadratek)
-            self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
+        self.narisi_mrezo()
         self.gamestate = True
-
-    # def igra(self):
-    #     while True:
-    #         self.prikazi_celotno_polje()
-    #         print("Preostale mine:", self.preostale_mine)
-    #         v = int(input("Vrstica: ")) - 1
-    #         s = int(input("Stolpec: ")) - 1
-    #         m = input("(m)ina / (p)razno: ")
-    #         m = (m == 'm')
-    #         poteka = self.posodobi(v, s, m)
-    #         if not poteka:
-    #             self.prikazi_celotno_polje(odkrito=True)
-    #             print('Zal ste naleteli na mino!')
-    #             self.porazi += 1
-    #             break
-    #         konec = self.konec()
-    #         if konec:
-    #             self.prikazi_celotno_polje(odkrito=True)
-    #             if self.preostale_mine == 0:
-    #                 self.zmage += 1
-    #                 print('Zmagali ste!')
-    #             else:
-    #                 self.porazi += 1
-    #                 print('Izgubili ste!')
-    #             break
 
 
 # igrica = Minesweeper(5, 3)
@@ -259,5 +191,17 @@ class Minesweeper():
 # igrica.prikazi_celotno_polje(odkrito=True)
 # igrica.igra()
 root = Tk()
-igrica = Minesweeper(root, 15, 30)
+igrica = Minesweeper(root, 5, 3)
+igrica.prikazi_celotno_polje(True)
 root.mainloop()
+
+# Jure reports a bug: Zakaj zgubim, ce vse flaggam?
+# Jure lost :( Predzadnjo se se da cancellat, potem pa ne vec.
+
+# Jure reports a second bug: veliko jih flaggam, kliknem na 0, se odpre vse povezano, flaggi pa ne.
+# (to je prav, seveda). Potem ko unflaggam polje, na katerem je bil flag, se ne pokaze nic, je prazno.
+# Nevermind... I am a moron. Jure is stupid, se neokrita polja morajo biti res drugacna :)
+
+# Jure reports a real second bug. It's an exploit :)) Polje ki ima 0 flaggas, potem pa naredis front click,
+# pa se vse okoli pokaze (to pomeni da z lahkoto najdes nicle, samo flagas, kliknes, unflagas, ce se kaj odpre,
+# si na nicli)
