@@ -2,6 +2,16 @@ from tkinter import *
 from classes import *
 import random
 
+BARVE = {7: '#8B00FF',
+         6: '#4B0082',
+         5: '#0000FF',
+         4: '#20A106',
+         3: '#F2CB1D',
+         2: '#FF7F00',
+         1: '#FF0000',
+         8: '#000000',
+         9: '#000000'}
+
 
 class Minesweeper():
     def __init__(self, master, velikost, mine):
@@ -13,6 +23,9 @@ class Minesweeper():
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
         self.gamestate = True
+        self.ozadje = '#BABABA'
+        self.zastava = PhotoImage(file='flag_icon_s.png')
+        self.bomba = PhotoImage(file='bomb_s.png')
 
         # --- GUI ---
         master.title('Minolovec')
@@ -101,7 +114,8 @@ class Minesweeper():
                 (x + 1) * self.kvadratek]
 
     def izracunaj_sredino_kvadratka(self, x, y):
-        pass
+        """ Izracuna koordinate tocke na sredini kvadratka. """
+        return y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek + (self.kvadratek // 2)
 
     def najdi_id(self, x, y):
         """ Najde id vseh elementov na Canvasu znotraj kvadratka na koordinati x, y. """
@@ -115,28 +129,34 @@ class Minesweeper():
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
 
     def narisi_polje(self, x, y):
-        self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                (self.kvadratek // 2), text=self.polje[x][y].vrednost, font=('Arial', 11, 'bold'))
-        if self.polje[x][y].vrednost == 'x':
+        kvad = self.izracunaj_kvadratek(x, y)
+        self.platno.create_rectangle(*kvad, fill=self.ozadje)
+        stevilka = self.polje[x][y].vrednost
+        sredina = self.izracunaj_sredino_kvadratka(x, y)
+        if stevilka == 'x':
+            self.platno.create_rectangle(*kvad, fill='#FF0000')
+            self.platno.create_image(sredina, image=self.bomba)
             self.preveri(mina=True)
+        elif stevilka != 0:
+            barva = BARVE[stevilka]
+            self.platno.create_text(sredina, text=stevilka, font=('Arial', 11, 'bold'), fill=barva)
 
     def narisi_mino(self, x, y):
         flag = self.polje[x][y].flagged  # polje smo ze oznacili/odznacili, treba ga je samo se narisat
         mine = self.preostale_mine.get()
+        sredina = self.izracunaj_sredino_kvadratka(x, y)
         if flag:
             kvad = self.izracunaj_kvadratek(x, y)
-            self.platno.create_rectangle(*kvad, fill='#FF0000')
-            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                    (self.kvadratek // 2), text='f', fill='#FFFFFF')
+            self.platno.create_rectangle(*kvad, fill='#FF9696', width=1, outline='#000000')
+            # self.platno.create_text(sredina, text='f', fill='#FFFFFF')
+            self.platno.create_image(sredina, image=self.zastava)
             self.preostale_mine.set(mine - 1)
-
         else:
             tag = self.najdi_id(x, y)
             for t in tag:
                 # print(t)
                 self.platno.delete(t)
-            self.platno.delete(self.platno.find_closest(y * self.kvadratek + (self.kvadratek // 2),
-                                                        x * self.kvadratek + (self.kvadratek // 2)))
+            self.platno.delete(self.platno.find_closest(*sredina))
             self.preostale_mine.set(mine + 1)
 
     def odpri_blok(self, koord):
@@ -188,7 +208,6 @@ class Minesweeper():
         self.platno.delete(ALL)
         self.narisi_mrezo()
         self.gamestate = True
-
 
 root = Tk()
 igrica = Minesweeper(root, 10, 10)
