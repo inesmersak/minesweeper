@@ -38,11 +38,10 @@ class Minesweeper():
                              background='#FFFFFF')
         self.platno.grid(row=3, column=0, columnspan=2)
         self.narisi_mrezo()
-        self.platno.bind("<Button-1>", self.levi_klik)
-        self.platno.bind("<Button-3>", self.desni_klik)
+        self.platno.bind("<Button-1>", self.klik)
+        self.platno.bind("<Button-3>", self.klik)
 
         self.napolni()
-        print(self.polje)
 
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
@@ -75,21 +74,25 @@ class Minesweeper():
             niz += '\n'
         print(niz)
 
-    def levi_klik(self, klik):
+    def klik(self, klik):
         if self.gamestate:
+            # print(vars(klik))
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
+            flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
+            self.poteza(x, y, flag)
+
+    def poteza(self, x, y, m):
+        if m:
+            ozn = self.polje[x][y].oznaci()
+            if ozn:
+                self.narisi_mino(x, y)
+                self.preveri()
+        else:
             if not self.polje[x][y].flagged:
                 # self.narisi_polje(x, y) tega verjetno ne rabim
                 self.odpri_blok((x, y))
-            self.preveri()
-
-    def desni_klik(self, klik):
-        if self.gamestate:
-            y = klik.x // self.kvadratek
-            x = klik.y // self.kvadratek
-            self.narisi_mino(x, y)
-            self.preveri()
+                self.preveri()
 
     def izracunaj_kvadratek(self, x, y):
         """ Izracuna tocki v levem zgornjem kotu in desnem spodnjem kotu kvadratka, ki se nahaja v vrstici x in
@@ -118,25 +121,23 @@ class Minesweeper():
             self.preveri(mina=True)
 
     def narisi_mino(self, x, y):
-        flag = self.polje[x][y].flagged
-        ozn = self.polje[x][y].oznaci()
-        if ozn:
-            mine = self.preostale_mine.get()
-            if not flag:
-                kvad = self.izracunaj_kvadratek(x, y)
-                self.platno.create_rectangle(*kvad, fill='#FF0000')
-                self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
-                                        (self.kvadratek // 2), text='f', fill='#FFFFFF')
-                self.preostale_mine.set(mine - 1)
+        flag = self.polje[x][y].flagged  # polje smo ze oznacili/odznacili, treba ga je samo se narisat
+        mine = self.preostale_mine.get()
+        if flag:
+            kvad = self.izracunaj_kvadratek(x, y)
+            self.platno.create_rectangle(*kvad, fill='#FF0000')
+            self.platno.create_text(y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek +
+                                    (self.kvadratek // 2), text='f', fill='#FFFFFF')
+            self.preostale_mine.set(mine - 1)
 
-            else:
-                tag = self.najdi_id(x, y)
-                for t in tag:
-                    # print(t)
-                    self.platno.delete(t)
-                self.platno.delete(self.platno.find_closest(y * self.kvadratek + (self.kvadratek // 2),
-                                                            x * self.kvadratek + (self.kvadratek // 2)))
-                self.preostale_mine.set(mine + 1)
+        else:
+            tag = self.najdi_id(x, y)
+            for t in tag:
+                # print(t)
+                self.platno.delete(t)
+            self.platno.delete(self.platno.find_closest(y * self.kvadratek + (self.kvadratek // 2),
+                                                        x * self.kvadratek + (self.kvadratek // 2)))
+            self.preostale_mine.set(mine + 1)
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
@@ -189,12 +190,8 @@ class Minesweeper():
         self.gamestate = True
 
 
-# igrica = Minesweeper(5, 3)
-# igrica.napolni()
-# igrica.prikazi_celotno_polje(odkrito=True)
-# igrica.igra()
 root = Tk()
-igrica = Minesweeper(root, 5, 3)
+igrica = Minesweeper(root, 10, 10)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
 
