@@ -2,13 +2,13 @@ from tkinter import *
 from classes import *
 import random
 
-BARVE = {7: '#8B00FF',
-         6: '#4B0082',
-         5: '#0000FF',
+BARVE = {1: '#8B00FF',
+         2: '#4B0082',
+         3: '#0000FF',
          4: '#20A106',
-         3: '#F2CB1D',
-         2: '#FF7F00',
-         1: '#FF0000',
+         5: '#F2CB1D',
+         6: '#FF7F00',
+         7: '#FF0000',
          8: '#000000',
          9: '#000000'}
 
@@ -92,8 +92,9 @@ class Minesweeper():
             # print(vars(klik))
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
-            flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
-            self.poteza(x, y, flag)
+            if x < self.velikost and y < self.velikost:
+                flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
+                self.poteza(x, y, flag)
 
     def poteza(self, x, y, m):
         if m:
