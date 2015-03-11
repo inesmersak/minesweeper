@@ -139,7 +139,7 @@ class Minesweeper():
             self.preveri(mina=True)
         elif stevilka != 0:
             barva = BARVE[stevilka]
-            self.platno.create_text(sredina, text=stevilka, font=('Arial', 11, 'bold'), fill=barva)
+            self.platno.create_text(sredina, text=stevilka, font=('Arial', 14, 'bold'), fill=barva)
 
     def narisi_mino(self, x, y):
         flag = self.polje[x][y].flagged  # polje smo ze oznacili/odznacili, treba ga je samo se narisat
