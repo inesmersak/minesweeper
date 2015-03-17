@@ -2,6 +2,7 @@ from tkinter import *
 from classes import *
 import random
 
+# array barv za stevilke na polju
 BARVE = {1: '#8B00FF',
          2: '#4B0082',
          3: '#0000FF',
@@ -15,19 +16,20 @@ BARVE = {1: '#8B00FF',
 
 class Minesweeper():
     def __init__(self, master, velikost, mine):
-        self.velikost = velikost
-        self.kvadratek = 30
-        self.mine = mine
+        self.velikost = velikost  # velikost kvadratnega igralnega polja
+        self.kvadratek = 30  # velikost enega kvadratka na igralnem polju
+        self.mine = mine  # stevilo min
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.preostale_mine = IntVar(value=self.mine)
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
-        self.gamestate = True
-        self.ozadje = '#BABABA'
-        self.zastava = PhotoImage(file='flag_icon_s.png')
-        self.bomba = PhotoImage(file='bomb_s.png')
+        self.gameactive = True  # ali igra poteka
 
         # --- GUI ---
+        self.ozadje = '#BABABA'  # barva ozadja polj
+        self.zastava = PhotoImage(file='flag_icon_s.png')  # nalozimo sliko zastave
+        self.bomba = PhotoImage(file='bomb_s.png')  # nalozimo sliko mine
+
         master.title('Minolovec')
 
         okvir = Frame(master)
@@ -88,7 +90,9 @@ class Minesweeper():
         print(niz)
 
     def klik(self, klik):
-        if self.gamestate:
+        """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
+        uporabnik kliknil levo ali desno tipko. """
+        if self.gameactive:
             # print(vars(klik))
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
@@ -97,14 +101,13 @@ class Minesweeper():
                 self.poteza(x, y, flag)
 
     def poteza(self, x, y, m):
-        if m:
+        if m:  # če je m True, je uporabnik kliknil z desno tipko, torej oznacimo polje z zastavo
             ozn = self.polje[x][y].oznaci()
             if ozn:
                 self.narisi_mino(x, y)
                 self.preveri()
-        else:
+        else:  # sicer polje odpremo
             if not self.polje[x][y].flagged:
-                # self.narisi_polje(x, y) tega verjetno ne rabim
                 self.odpri_blok((x, y))
                 self.preveri()
 
@@ -130,6 +133,7 @@ class Minesweeper():
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
 
     def narisi_polje(self, x, y):
+        """ Narise polje s stevilko. """
         kvad = self.izracunaj_kvadratek(x, y)
         self.platno.create_rectangle(*kvad, fill=self.ozadje)
         stevilka = self.polje[x][y].vrednost
@@ -143,6 +147,7 @@ class Minesweeper():
             self.platno.create_text(sredina, text=stevilka, font=('Arial', 14, 'bold'), fill=barva)
 
     def narisi_mino(self, x, y):
+        """ Ali narise ali zbrise zastavico na polje. """
         flag = self.polje[x][y].flagged  # polje smo ze oznacili/odznacili, treba ga je samo se narisat
         mine = self.preostale_mine.get()
         sredina = self.izracunaj_sredino_kvadratka(x, y)
@@ -188,10 +193,10 @@ class Minesweeper():
     def preveri(self, mina=False):
         konec = self.konec()
         if mina:
-            self.gamestate = False
+            self.gameactive = False
             self.porazi.set(self.porazi.get() + 1)
         elif konec and self.preostale_mine.get() == 0:
-            self.gamestate = False
+            self.gameactive = False
             self.zmage.set(self.zmage.get() + 1)
             # if self.preostale_mine.get() == 0:
             #     self.zmage.set(self.zmage.get() + 1)
@@ -208,7 +213,7 @@ class Minesweeper():
         self.preostale_mine.set(self.mine)
         self.platno.delete(ALL)
         self.narisi_mrezo()
-        self.gamestate = True
+        self.gameactive = True
 
 root = Tk()
 igrica = Minesweeper(root, 10, 10)
