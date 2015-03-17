@@ -1,5 +1,5 @@
 from tkinter import *
-from classes import *
+from polje import *
 import random
 
 # array barv za stevilke na polju
@@ -27,8 +27,8 @@ class Minesweeper():
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
-        self.zastava = PhotoImage(file='flag_icon_s.png')  # nalozimo sliko zastave
-        self.bomba = PhotoImage(file='bomb_s.png')  # nalozimo sliko mine
+        self.zastava = PhotoImage(file='flag_small.png')  # nalozimo sliko zastave
+        self.bomba = PhotoImage(file='bomb_small.png')  # nalozimo sliko mine
 
         master.title('Minolovec')
 
@@ -68,12 +68,10 @@ class Minesweeper():
     def napolni(self):
         """ Nakljucno napolni igralno polje s 'self.mine' stevilom min. Mine so oznacene z x, prazni kvadratki z 0. """
         i = self.mine
+        prazno = [(x, y) for x in range(self.velikost) for y in range(self.velikost)]
         while i > 0:
-            x = random.randint(0, self.velikost-1)
-            y = random.randint(0, self.velikost-1)
-            while self.polje[x][y].vrednost == 'x':
-                x = random.randint(0, self.velikost-1)
-                y = random.randint(0, self.velikost-1)
+            (x, y) = random.choice(prazno)
+            prazno.remove((x, y))
             self.polje[x][y].vrednost = 'x'
             self.spremeni_stevilko_polj(x, y)
             i -= 1
@@ -216,7 +214,7 @@ class Minesweeper():
         self.gameactive = True
 
 root = Tk()
-igrica = Minesweeper(root, 10, 10)
+igrica = Minesweeper(root, 70, 4900)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
 
