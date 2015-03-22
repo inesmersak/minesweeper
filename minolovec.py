@@ -1,5 +1,6 @@
 from tkinter import *
 from polje import *
+import racunalnik
 import random
 
 # array barv za stevilke na polju
@@ -24,6 +25,7 @@ class Minesweeper():
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
         self.gameactive = True  # ali igra poteka
+        self.inteligenca = None
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
@@ -57,6 +59,8 @@ class Minesweeper():
         self.platno.bind("<Button-3>", self.klik)
 
         self.napolni()
+
+        self.prepusti_racunalniku()
 
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
@@ -99,15 +103,18 @@ class Minesweeper():
                 self.poteza(x, y, flag)
 
     def poteza(self, x, y, m):
-        if m:  # če je m True, je uporabnik kliknil z desno tipko, torej oznacimo polje z zastavo
-            ozn = self.polje[x][y].oznaci()
-            if ozn:
-                self.narisi_mino(x, y)
-                self.preveri()
-        else:  # sicer polje odpremo
-            if not self.polje[x][y].flagged:
-                self.odpri_blok((x, y))
-                self.preveri()
+        if self.gameactive:
+            if m:  # če je m True, je uporabnik kliknil z desno tipko, torej oznacimo polje z zastavo
+                ozn = self.polje[x][y].oznaci()
+                if ozn:
+                    self.narisi_mino(x, y)
+                    self.preveri()
+            else:  # sicer polje odpremo
+                if not self.polje[x][y].flagged:
+                    print(self.vrni_sosednje_zastave(x, y))
+                    print(self.vrni_sosednja_polja(x, y))
+                    self.odpri_blok((x, y))
+                    self.preveri()
 
     def izracunaj_kvadratek(self, x, y):
         """ Izracuna tocki v levem zgornjem kotu in desnem spodnjem kotu kvadratka, ki se nahaja v vrstici x in
@@ -182,6 +189,7 @@ class Minesweeper():
                             odpri.append((i, j))
 
     def konec(self):
+        """ Preveri, ali je igralno polje pravilno zapolnjeno z zastavami. """
         for x in self.polje:
             for y in x:
                 if not (y.odprto or y.flagged):
@@ -189,6 +197,7 @@ class Minesweeper():
         return True
 
     def preveri(self, mina=False):
+        """ Preveri, ali je igre konec. """
         konec = self.konec()
         if mina:
             self.gameactive = False
@@ -196,16 +205,9 @@ class Minesweeper():
         elif konec and self.preostale_mine.get() == 0:
             self.gameactive = False
             self.zmage.set(self.zmage.get() + 1)
-            # if self.preostale_mine.get() == 0:
-            #     self.zmage.set(self.zmage.get() + 1)
-            # else:
-            #     for vrs in self.polje:
-            #         for obj in vrs:
-            #             if obj.flagged and obj.vrednost != 'x':
-            #                 print(obj.x, obj.y, 'ni good')
-            #     self.porazi.set(self.porazi.get() + 1)
 
     def nova_igra(self):
+        """ Resetira vse spremenljivke in pripravi novo igro. """
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.napolni()
         self.preostale_mine.set(self.mine)
@@ -213,8 +215,47 @@ class Minesweeper():
         self.narisi_mrezo()
         self.gameactive = True
 
+    def vrni_sosednje_zastave(self, x, y):
+        """ Vrne stevilo trenutnih zastav v okolici polja, podana z x in y. """
+        zastave = 0
+        for z in range(max(0, x - 1), min(x + 2, self.velikost)):
+            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
+                if z != x or w != y:
+                    if self.polje[z][w].flagged:
+                        zastave += 1
+        return zastave
+
+    def vrni_sosednja_polja(self, x, y):
+        """ Vrne koordinate sosednjih polj polja, podanega z x in y. """
+        sosedi = []
+        for z in range(max(0, x - 1), min(x + 2, self.velikost)):
+            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
+                if z != x or w != y:
+                    sosedi.append((z, w))
+        return sosedi
+
+    def vrni_stanje(self):
+        """ Vrne stanje celotnega igralnega polja - kateri kvadratki so odkriti in kateri oznaceni. """
+        return None
+
+    def prepusti_racunalniku(self):
+        self.inteligenca = racunalnik.Racunalnik(self)
+        self.inteligenca.zgradi_stanje_polja()
+        print(self.inteligenca.stanje_polja)
+        self.inteligenca.naredi_potezo()
+        print(self.inteligenca.stanje_polja)
+        self.inteligenca.naredi_potezo()
+        print(self.inteligenca.stanje_polja)
+        self.inteligenca.naredi_potezo()
+        print(self.inteligenca.stanje_polja)
+        self.inteligenca.naredi_potezo()
+        print(self.inteligenca.stanje_polja)
+        # while self.gameactive:
+        #     self.inteligenca.naredi_potezo()
+        #     print(self.inteligenca.stanje_polja)
+
 root = Tk()
-igrica = Minesweeper(root, 70, 4900)
+igrica = Minesweeper(root, 10, 10)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
 
