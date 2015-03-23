@@ -62,6 +62,10 @@ class Minesweeper():
 
         self.prepusti_racunalniku()
 
+    # ***********************
+    # PRIPRAVA IGRE
+    # ***********************
+
     def spremeni_stevilko_polj(self, x, y):
         """ Spremeni stevilko polj okoli mine, ta je podana s koordinatami x in y. """
         for z in range(max(0, x-1), min(x+2, self.velikost)):
@@ -80,27 +84,18 @@ class Minesweeper():
             self.spremeni_stevilko_polj(x, y)
             i -= 1
 
-    def prikazi_celotno_polje(self, odkrito=False):
-        """ Prikaze celotno polje min in praznih kvadratkov. """
-        niz = ''
-        for x in self.polje:
-            niz += '|'
-            for y in x:
-                n = y.vrednost if odkrito else str(y)
-                niz += ' {0} |'.format(n)
-            niz += '\n'
-        print(niz)
+    def nova_igra(self):
+        """ Resetira vse spremenljivke in pripravi novo igro. """
+        self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
+        self.napolni()
+        self.preostale_mine.set(self.mine)
+        self.platno.delete(ALL)
+        self.narisi_mrezo()
+        self.gameactive = True
 
-    def klik(self, klik):
-        """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
-        uporabnik kliknil levo ali desno tipko. """
-        if self.gameactive:
-            # print(vars(klik))
-            y = klik.x // self.kvadratek
-            x = klik.y // self.kvadratek
-            if x < self.velikost and y < self.velikost:
-                flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
-                self.poteza(x, y, flag)
+    # ***********************
+    # MEHANIZEM IGRE
+    # ***********************
 
     def poteza(self, x, y, m):
         if self.gameactive:
@@ -116,20 +111,60 @@ class Minesweeper():
                     self.odpri_blok((x, y))
                     self.preveri()
 
-    def izracunaj_kvadratek(self, x, y):
-        """ Izracuna tocki v levem zgornjem kotu in desnem spodnjem kotu kvadratka, ki se nahaja v vrstici x in
-        stolpcu y. """
-        return [y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
-                (x + 1) * self.kvadratek]
+    def odpri_blok(self, koord):
+        """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
+        sosednja polja, ce je stevilo min v okolici polja 0. Postopek ponavlja za vsako polje, ki se odpre,
+        dokler ne naleti na polje, ki ima v okolici kaksno mino. """
+        checked = [koord]
+        odpri = [koord]
+        while odpri:
+            x, y = odpri.pop()
+            odpr = self.polje[x][y].odpri()
+            if odpr:
+                self.narisi_polje(x, y)
+            checked.append((x, y))
+            if self.polje[x][y].vrednost == 0:
+                for i in range(max(0, x - 1), min(x + 2, self.velikost)):
+                    for j in range(max(0, y - 1), min(y + 2, self.velikost)):
+                        if not self.polje[i][j].odprto and not (i, j) in checked:
+                            odpri.append((i, j))
 
-    def izracunaj_sredino_kvadratka(self, x, y):
-        """ Izracuna koordinate tocke na sredini kvadratka. """
-        return y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek + (self.kvadratek // 2)
+    def konec(self):
+        """ Preveri, ali je igralno polje pravilno zapolnjeno z zastavami. """
+        for x in self.polje:
+            for y in x:
+                if not (y.odprto or y.flagged):
+                    return False
+        return True
 
-    def najdi_id(self, x, y):
-        """ Najde id vseh elementov na Canvasu znotraj kvadratka na koordinati x, y. """
-        kvad = self.izracunaj_kvadratek(x, y)
-        return self.platno.find_enclosed(*kvad)
+    def preveri(self, mina=False):
+        """ Preveri, ali je igre konec. """
+        konec = self.konec()
+        if mina:
+            self.gameactive = False
+            self.porazi.set(self.porazi.get() + 1)
+        elif konec and self.preostale_mine.get() == 0:
+            self.gameactive = False
+            self.zmage.set(self.zmage.get() + 1)
+
+    # ***********************
+    # INPUT
+    # ***********************
+
+    def klik(self, klik):
+        """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
+        uporabnik kliknil levo ali desno tipko. """
+        if self.gameactive:
+            # print(vars(klik))
+            y = klik.x // self.kvadratek
+            x = klik.y // self.kvadratek
+            if x < self.velikost and y < self.velikost:
+                flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
+                self.poteza(x, y, flag)
+
+    # ***********************
+    # RISANJE
+    # ***********************
 
     def narisi_mrezo(self):
         """ Narise mrezo na Canvasu. """
@@ -170,50 +205,25 @@ class Minesweeper():
             self.platno.delete(self.platno.find_closest(*sredina))
             self.preostale_mine.set(mine + 1)
 
-    def odpri_blok(self, koord):
-        """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
-        sosednja polja, ce je stevilo min v okolici polja 0. Postopek ponavlja za vsako polje, ki se odpre,
-        dokler ne naleti na polje, ki ima v okolici kaksno mino. """
-        checked = [koord]
-        odpri = [koord]
-        while odpri:
-            x, y = odpri.pop()
-            odpr = self.polje[x][y].odpri()
-            if odpr:
-                self.narisi_polje(x, y)
-            checked.append((x, y))
-            if self.polje[x][y].vrednost == 0:
-                for i in range(max(0, x-1), min(x+2, self.velikost)):
-                    for j in range(max(0, y-1), min(y+2, self.velikost)):
-                        if not self.polje[i][j].odprto and not (i, j) in checked:
-                            odpri.append((i, j))
+    # ------ POMOZNE FUNKCIJE ZA RISANJE ------
+    def izracunaj_kvadratek(self, x, y):
+        """ Izracuna tocki v levem zgornjem kotu in desnem spodnjem kotu kvadratka, ki se nahaja v vrstici x in
+        stolpcu y. """
+        return [y * self.kvadratek, x * self.kvadratek, (y + 1) * self.kvadratek,
+                (x + 1) * self.kvadratek]
 
-    def konec(self):
-        """ Preveri, ali je igralno polje pravilno zapolnjeno z zastavami. """
-        for x in self.polje:
-            for y in x:
-                if not (y.odprto or y.flagged):
-                    return False
-        return True
+    def izracunaj_sredino_kvadratka(self, x, y):
+        """ Izracuna koordinate tocke na sredini kvadratka. """
+        return y * self.kvadratek + (self.kvadratek // 2), x * self.kvadratek + (self.kvadratek // 2)
 
-    def preveri(self, mina=False):
-        """ Preveri, ali je igre konec. """
-        konec = self.konec()
-        if mina:
-            self.gameactive = False
-            self.porazi.set(self.porazi.get() + 1)
-        elif konec and self.preostale_mine.get() == 0:
-            self.gameactive = False
-            self.zmage.set(self.zmage.get() + 1)
+    def najdi_id(self, x, y):
+        """ Najde id vseh elementov na Canvasu znotraj kvadratka na koordinati x, y. """
+        kvad = self.izracunaj_kvadratek(x, y)
+        return self.platno.find_enclosed(*kvad)
 
-    def nova_igra(self):
-        """ Resetira vse spremenljivke in pripravi novo igro. """
-        self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
-        self.napolni()
-        self.preostale_mine.set(self.mine)
-        self.platno.delete(ALL)
-        self.narisi_mrezo()
-        self.gameactive = True
+    # ***********************
+    # SPREMLJANJE IGRE
+    # ***********************
 
     def vrni_sosednje_zastave(self, x, y):
         """ Vrne stevilo trenutnih zastav v okolici polja, podana z x in y. """
@@ -238,6 +248,10 @@ class Minesweeper():
         """ Vrne stanje celotnega igralnega polja - kateri kvadratki so odkriti in kateri oznaceni. """
         return None
 
+    # ***********************
+    # INTELIGENCA
+    # ***********************
+
     def prepusti_racunalniku(self):
         self.inteligenca = racunalnik.Racunalnik(self)
         self.inteligenca.zgradi_stanje_polja()
@@ -254,18 +268,23 @@ class Minesweeper():
         #     self.inteligenca.naredi_potezo()
         #     print(self.inteligenca.stanje_polja)
 
+    # ***********************
+    # POMOZNE FUNKCIJE
+    # ***********************
+
+    def prikazi_celotno_polje(self, odkrito=False):
+        """ Prikaze celotno polje min in praznih kvadratkov. """
+        niz = ''
+        for x in self.polje:
+            niz += '|'
+            for y in x:
+                n = y.vrednost if odkrito else str(y)
+                niz += ' {0} |'.format(n)
+            niz += '\n'
+        print(niz)
+
+
 root = Tk()
 igrica = Minesweeper(root, 10, 10)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
-
-# Jure reports a bug: Zakaj zgubim, ce vse flaggam?
-# Jure lost :( Predzadnjo se se da cancellat, potem pa ne vec.
-
-# Jure reports a second bug: veliko jih flaggam, kliknem na 0, se odpre vse povezano, flaggi pa ne.
-# (to je prav, seveda). Potem ko unflaggam polje, na katerem je bil flag, se ne pokaze nic, je prazno.
-# Nevermind... I am a moron. Jure is stupid, se neokrita polja morajo biti res drugacna :)
-
-# Jure reports a real second bug. It's an exploit :)) Polje ki ima 0 flaggas, potem pa naredis front click,
-# pa se vse okoli pokaze (to pomeni da z lahkoto najdes nicle, samo flagas, kliknes, unflagas, ce se kaj odpre,
-# si na nicli)
