@@ -36,6 +36,8 @@ class Minesweeper():
         self.vlakno = None
         self.inteligenca = None
         self.p = None  # poteza
+        self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
+        self.zakasnitev = 200  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
@@ -70,7 +72,8 @@ class Minesweeper():
 
         self.napolni()
 
-        self.prepusti_racunalniku()
+        if self.pomoc:
+            self.prepusti_racunalniku()
 
     # ***********************
     # PRIPRAVA IGRE
@@ -107,6 +110,9 @@ class Minesweeper():
         self.odprta_polja = []
         self.zastave = []
 
+        if self.pomoc:
+            self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
+
     # ***********************
     # MEHANIZEM IGRE
     # ***********************
@@ -129,9 +135,9 @@ class Minesweeper():
                 if not self.polje[x][y].flagged:
                     self.odpri_blok((x, y))
                     self.preveri()
-        # print(self.zaprta_polja)
-        # print(self.odprta_polja)
-        # print(self.zastave)
+
+            if self.gameactive and self.pomoc:
+                self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
@@ -275,18 +281,24 @@ class Minesweeper():
     # ***********************
 
     def prepusti_racunalniku(self):
+        self.p = None
         self.inteligenca = racunalnik.Racunalnik(self)
-        while self.gameactive:
-            self.vlakno = threading.Thread(target=self.razmisljaj)
-            self.vlakno.start()
-            if self.p:
-                self.poteza(self.p)
-                self.p = None
+        self.vlakno = threading.Thread(target=self.razmisljaj)
+        self.vlakno.start()
+        self.platno.after(self.zakasnitev, self.konec_razmisljanja)
 
     def razmisljaj(self):
         p = self.inteligenca.vrni_potezo()
         print(p)
         self.p = p
+        self.vlakno = None
+
+    def konec_razmisljanja(self):
+        if self.p is None:
+            self.platno.after(self.zakasnitev, self.konec_razmisljanja)
+        else:
+            self.poteza(self.p)
+            self.p = None
 
     # ***********************
     # POMOZNE FUNKCIJE
