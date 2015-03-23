@@ -27,6 +27,12 @@ class Minesweeper():
         self.porazi = IntVar(0)
         self.gameactive = True  # ali igra poteka
 
+        self.odprta_polja = []  # vsa trenutno odprta polja
+        self.zaprta_polja = [(i, j) for i in range(self.velikost) for j in range(self.velikost)]  # vsa trenutno zaprta
+        # polja
+        self.zastave = []  # vsa polja, ki so trenutno oznacena z zastavico
+
+        # --- INTELIGENCA ---
         self.vlakno = None
         self.inteligenca = None
         self.p = None  # poteza
@@ -97,6 +103,10 @@ class Minesweeper():
         self.narisi_mrezo()
         self.gameactive = True
 
+        self.zaprta_polja = [(i, j) for i in range(self.velikost) for j in range(self.velikost)]
+        self.odprta_polja = []
+        self.zastave = []
+
     # ***********************
     # MEHANIZEM IGRE
     # ***********************
@@ -108,13 +118,20 @@ class Minesweeper():
                 ozn = self.polje[x][y].oznaci()
                 if ozn:
                     self.narisi_mino(x, y)
+                    if (x, y) in self.zastave:
+                        self.zastave.remove((x, y))
+                        self.zaprta_polja.append((x, y))
+                    else:
+                        self.zaprta_polja.remove((x, y))
+                        self.zastave.append((x, y))
                     self.preveri()
             else:  # sicer polje odpremo
                 if not self.polje[x][y].flagged:
-                    print(self.vrni_sosednje_zastave(x, y))
-                    print(self.vrni_sosednja_polja(x, y))
                     self.odpri_blok((x, y))
                     self.preveri()
+        # print(self.zaprta_polja)
+        # print(self.odprta_polja)
+        # print(self.zastave)
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
@@ -127,6 +144,8 @@ class Minesweeper():
             odpr = self.polje[x][y].odpri()
             if odpr:
                 self.narisi_polje(x, y)
+                self.zaprta_polja.remove((x, y))
+                self.odprta_polja.append((x, y))
             checked.append((x, y))
             if self.polje[x][y].vrednost == 0:
                 for i in range(max(0, x - 1), min(x + 2, self.velikost)):
@@ -134,21 +153,19 @@ class Minesweeper():
                         if not self.polje[i][j].odprto and not (i, j) in checked:
                             odpri.append((i, j))
 
-    def konec(self):
-        """ Preveri, ali je igralno polje pravilno zapolnjeno z zastavami. """
-        for x in self.polje:
-            for y in x:
-                if not (y.odprto or y.flagged):
-                    return False
+    def polno(self):
+        """ Preveri, ali je igralno polje zapolnjeno. """
+        if self.zaprta_polja:
+            return False
         return True
 
     def preveri(self, mina=False):
         """ Preveri, ali je igre konec. """
-        konec = self.konec()
+        polno = self.polno()
         if mina:
             self.gameactive = False
             self.porazi.set(self.porazi.get() + 1)
-        elif konec and self.preostale_mine.get() == 0:
+        elif polno and self.preostale_mine.get() == 0:
             self.gameactive = False
             self.zmage.set(self.zmage.get() + 1)
 
@@ -268,6 +285,7 @@ class Minesweeper():
 
     def razmisljaj(self):
         p = self.inteligenca.vrni_potezo()
+        print(p)
         self.p = p
 
     # ***********************
@@ -287,6 +305,6 @@ class Minesweeper():
 
 
 root = Tk()
-igrica = Minesweeper(root, 10, 10)
+igrica = Minesweeper(root, 10, 20)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()

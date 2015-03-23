@@ -4,7 +4,7 @@ class Polje():
         self.y = y
         self.vrednost = vrednost
         self.odprto = False
-        self.prikaz = None
+        self.prikaz = ''
         self.flagged = False
         # self.id = None
 
@@ -20,10 +20,7 @@ class Polje():
 
     def oznaci(self):
         if not self.odprto:
-            self.prikaz = 'f' if '_' == self.prikaz else '_'
+            self.prikaz = 'f' if '' == self.prikaz else ''
             self.flagged = True if not self.flagged else False
             return True
         return False
-
-    # def prikaz(self): ## prikaz je metoda in spremenljivka!
-    #     pass
