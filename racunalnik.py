@@ -11,7 +11,7 @@ class Racunalnik:
         self.zaprta_polja = None
         self.zastave = None
 
-    def naredi_potezo(self):
+    def vrni_potezo(self):
         if self.odpri:
             poteza = self.odpri.pop()
         else:
@@ -20,7 +20,7 @@ class Racunalnik:
                 poteza = self.odpri.pop()
             else:
                 poteza = self.nakljucna_poteza()
-        self.igra.poteza(*poteza)
+        self.igra.poteza(poteza)
         self.posodobi_stanje_polja(poteza)
 
     def izracunaj_potezo(self):

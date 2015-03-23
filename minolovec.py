@@ -2,6 +2,7 @@ from tkinter import *
 from polje import *
 import racunalnik
 import random
+import threading
 
 # array barv za stevilke na polju
 BARVE = {1: '#8B00FF',
@@ -25,7 +26,10 @@ class Minesweeper():
         self.zmage = IntVar(0)
         self.porazi = IntVar(0)
         self.gameactive = True  # ali igra poteka
+
+        self.vlakno = None
         self.inteligenca = None
+        self.p = None  # poteza
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
@@ -97,7 +101,8 @@ class Minesweeper():
     # MEHANIZEM IGRE
     # ***********************
 
-    def poteza(self, x, y, m):
+    def poteza(self, p):
+        (x, y, m) = p
         if self.gameactive:
             if m:  # če je m True, je uporabnik kliknil z desno tipko, torej oznacimo polje z zastavo
                 ozn = self.polje[x][y].oznaci()
@@ -160,7 +165,7 @@ class Minesweeper():
             x = klik.y // self.kvadratek
             if x < self.velikost and y < self.velikost:
                 flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
-                self.poteza(x, y, flag)
+                self.poteza((x, y, flag))
 
     # ***********************
     # RISANJE
@@ -254,19 +259,16 @@ class Minesweeper():
 
     def prepusti_racunalniku(self):
         self.inteligenca = racunalnik.Racunalnik(self)
-        self.inteligenca.zgradi_stanje_polja()
-        print(self.inteligenca.stanje_polja)
-        self.inteligenca.naredi_potezo()
-        print(self.inteligenca.stanje_polja)
-        self.inteligenca.naredi_potezo()
-        print(self.inteligenca.stanje_polja)
-        self.inteligenca.naredi_potezo()
-        print(self.inteligenca.stanje_polja)
-        self.inteligenca.naredi_potezo()
-        print(self.inteligenca.stanje_polja)
-        # while self.gameactive:
-        #     self.inteligenca.naredi_potezo()
-        #     print(self.inteligenca.stanje_polja)
+        while self.gameactive:
+            self.vlakno = threading.Thread(target=self.razmisljaj)
+            self.vlakno.start()
+            if self.p:
+                self.poteza(self.p)
+                self.p = None
+
+    def razmisljaj(self):
+        p = self.inteligenca.vrni_potezo()
+        self.p = p
 
     # ***********************
     # POMOZNE FUNKCIJE
