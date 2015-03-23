@@ -37,7 +37,7 @@ class Minesweeper():
         self.inteligenca = None
         self.p = None  # poteza
         self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
-        self.zakasnitev = 200  # zakasnitev risanja potez racunalnika
+        self.zakasnitev = 50  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
@@ -69,6 +69,7 @@ class Minesweeper():
         self.narisi_mrezo()
         self.platno.bind("<Button-1>", self.klik)
         self.platno.bind("<Button-3>", self.klik)
+        master.bind("<F1>", self.nova_igra)
 
         self.napolni()
 
@@ -97,7 +98,7 @@ class Minesweeper():
             self.spremeni_stevilko_polj(x, y)
             i -= 1
 
-    def nova_igra(self):
+    def nova_igra(self, *args):
         """ Resetira vse spremenljivke in pripravi novo igro. """
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.napolni()
