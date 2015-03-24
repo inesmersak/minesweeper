@@ -36,7 +36,7 @@ class Minesweeper():
         self.vlakno = None
         self.inteligenca = None
         self.p = None  # poteza
-        self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
+        self.pomoc = False  # ali igralec zeli pomoc racunalnika ali ne
         self.zakasnitev = 50  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
@@ -136,6 +136,8 @@ class Minesweeper():
                 if not self.polje[x][y].flagged:
                     self.odpri_blok((x, y))
                     self.preveri()
+
+            print(self.doloci_rob())
 
             if self.gameactive and self.pomoc:
                 self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
@@ -273,9 +275,42 @@ class Minesweeper():
                     sosedi.append((z, w))
         return sosedi
 
-    def vrni_stanje(self):
-        """ Vrne stanje celotnega igralnega polja - kateri kvadratki so odkriti in kateri oznaceni. """
-        return None
+    def doloci_rob(self):
+        rob = []
+        spodaj = True  # rob je spodaj
+        zgoraj = True  # rob je zgoraj
+        levo = True  # rob je na levi
+        desno = True  # rob je na desni
+        for (x, y) in self.zaprta_polja:
+            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
+                if zgoraj and x - 1 >= 0:
+                    if (x - 1, w) not in self.odprta_polja:
+                        zgoraj = False
+                if spodaj and x + 1 < self.velikost:
+                    if (x + 1, w) not in self.odprta_polja:
+                        spodaj = False
+            if zgoraj and x == 0: zgoraj = False  # ce je polje na zgornjem robu polja, zgornjega roba nima
+            if spodaj and x == self.velikost - 1: spodaj = False  # ce je polje na spodnjem robu polja, spodnjega roba
+            # nima
+
+            for z in range(max(0, x - 1), min(x + 2, self.velikost)):
+                if levo and y - 1 >= 0:
+                    if (z, y - 1) not in self.odprta_polja:
+                        levo = False
+                if desno and y + 1 < self.velikost:
+                    if (z, y + 1) not in self.odprta_polja:
+                        desno = False
+            if levo and y == 0: levo = False  # ce je polje na levem robu polja, levega roba nima
+            if desno and y == self.velikost - 1: desno = False  # ce je polje na desnem robu polja, desnega roba nima
+
+            if spodaj or zgoraj or levo or desno:
+                rob.append((x, y))
+
+            levo = True
+            desno = True
+            spodaj = True
+            zgoraj = True
+        return rob
 
     # ***********************
     # INTELIGENCA
@@ -318,6 +353,6 @@ class Minesweeper():
 
 
 root = Tk()
-igrica = Minesweeper(root, 10, 20)
+igrica = Minesweeper(root, 10, 10)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
