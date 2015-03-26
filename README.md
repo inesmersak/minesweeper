@@ -12,8 +12,8 @@ Repozitorij vsebuje:
 
 * `minolovec.py`: vsebuje glavni razred z mehanizmom igre in grafiko, požene igro;
 
-* `polje.py`: vsebuje razred `Polje`, ki predstavlja en kvadratek na celotni igralni površini, in vsebuje podatke o njemu;
+* `polje.py`: vsebuje razred `Polje`, ki predstavlja en kvadratek na celotni igralni površini in vsebuje podatke o njemu;
 
 * `racunalnik.py`: vsebuje umetno inteligenco.
 
-Poleg tega repozitorij vsebuje tudi datoteko `tekstovniUI.py`, kjer so shranjeni ostanki tekstovnega uporabniškega vmesnika, ki se pri igri ne uporablja več. 
+Poleg tega repozitorij vsebuje tudi datoteko `tekstovniUI.py`, kjer so shranjeni ostanki tekstovnega uporabniškega vmesnika, ki se pri igri ne uporablja več.
