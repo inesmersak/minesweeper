@@ -43,6 +43,11 @@ class Minesweeper():
         self.ozadje = '#BABABA'  # barva ozadja polj
         self.zastava = PhotoImage(file='flag_small.png')  # nalozimo sliko zastave
         self.bomba = PhotoImage(file='bomb_small.png')  # nalozimo sliko mine
+        self.nastavitve = None  # okno z nastavitvami
+        self.maxvelikost = 30  # maksimalna velikost, ki jo bo uporabnik lahko izbral pri nastavitvah
+        self.izbrana_velikost = None  # velikost, ki jo je uporabnik izbral
+        self.izbrane_mine = None  # stevilo min, ki jih bo uporabnik izbral
+        self.izbran_igralec = None  # ali bo uporabnik izbral resevanje s pomocjo racunalnika
 
         master.title('Minolovec')
 
@@ -52,7 +57,9 @@ class Minesweeper():
         menu = Menu(master)
         master.config(menu=menu)
         podmenu = Menu(menu)
-        podmenu.add_command(label='Nova igra', command=self.nova_igra)
+        podmenu.add_command(label='Nova igra    [F1]', command=self.nova_igra)
+        podmenu.add_command(label='Nastavitve   [F2]', command=self.okno_z_nastavitvami)
+        podmenu.add_separator()
         podmenu.add_command(label='Izhod', command=master.destroy)
         menu.add_cascade(label='File', menu=podmenu)
 
@@ -70,11 +77,9 @@ class Minesweeper():
         self.platno.bind("<Button-1>", self.klik)
         self.platno.bind("<Button-3>", self.klik)
         master.bind("<F1>", self.nova_igra)
+        master.bind("<F2>", self.okno_z_nastavitvami)
 
-        self.napolni()
-
-        if self.pomoc:
-            self.prepusti_racunalniku()
+        self.okno_z_nastavitvami()
 
     # ***********************
     # PRIPRAVA IGRE
@@ -104,6 +109,7 @@ class Minesweeper():
         self.napolni()
         self.preostale_mine.set(self.mine)
         self.platno.delete(ALL)
+        self.platno.config(width=self.velikost*self.kvadratek, height=self.velikost*self.kvadratek)
         self.narisi_mrezo()
         self.gameactive = True
 
@@ -113,6 +119,53 @@ class Minesweeper():
 
         if self.pomoc:
             self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
+
+    # ***********************
+    # NASTAVITEV IGRE
+    # ***********************
+
+    def ponastavi(self, *args):
+        m = int(self.izbrane_mine.get())
+        v = int(self.izbrana_velikost.get())
+        if m > v ** 2:
+            # vrnemo error
+            pass
+        else:
+            self.velikost = v
+            self.mine = m
+            self.pomoc = True if self.izbran_igralec.get() else False
+            self.nastavitve.destroy()
+            self.gameactive = True
+            self.nova_igra()
+
+    def okno_z_nastavitvami(self, *args):
+        """ Odpre okno z nastavitvami. """
+        self.nastavitve = Toplevel()
+        self.nastavitve.title('Nastavitve')
+        self.nastavitve.focus()
+
+        self.gameactive = False
+
+        trenutna_velikost = StringVar()
+        trenutna_velikost.set(self.velikost)
+        Label(self.nastavitve, text='Velikost polja: ').grid(row=0, column=0, sticky='W')
+        self.izbrana_velikost = Spinbox(self.nastavitve, from_=2, to=self.maxvelikost, textvariable=trenutna_velikost)
+        self.izbrana_velikost.grid(row=0, column=1)
+        self.izbrana_velikost.focus()
+
+        trenutne_mine = StringVar()
+        trenutne_mine.set(self.mine)
+        Label(self.nastavitve, text='Število min: ').grid(row=1, column=0, sticky='W')
+        self.izbrane_mine = Spinbox(self.nastavitve, from_=1, to=int(self.izbrana_velikost.get())**2, textvariable=trenutne_mine)
+        self.izbrane_mine.grid(row=1, column=1)
+
+        self.izbran_igralec = IntVar()
+        self.izbran_igralec.set(1 if self.pomoc else 0)
+        Checkbutton(self.nastavitve, text='Reševanje s pomočjo računalnika', var=self.izbran_igralec).grid(row=2, column=0, columnspan=2)
+
+        Button(self.nastavitve, text='V redu', command=self.ponastavi).grid(row=3, column=1)
+
+        self.nastavitve.bind("<Return>", self.ponastavi)
 
     # ***********************
     # MEHANIZEM IGRE
