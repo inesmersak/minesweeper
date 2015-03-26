@@ -70,9 +70,12 @@ class Minesweeper():
         Label(okvir, text='Preostale mine: ').grid(row=2, column=0, sticky='S')
         Label(okvir, textvariable=self.preostale_mine).grid(row=2, column=1, sticky='WS')
 
+        self.poteza_racunalnika = Button(okvir, text='Pomoč računalnika', command=self.prepusti_racunalniku)
+        self.poteza_racunalnika.grid(row=0, column=2, rowspan=3)
+
         self.platno = Canvas(okvir, width=self.velikost*self.kvadratek, height=self.velikost*self.kvadratek,
-                             background='#FFFFFF')
-        self.platno.grid(row=3, column=0, columnspan=2)
+                             background='#FFFFFF', bd=1, highlightthickness=1, highlightbackground='#000000')
+        self.platno.grid(row=3, column=0, columnspan=3)
         self.narisi_mrezo()
         self.platno.bind("<Button-1>", self.klik)
         self.platno.bind("<Button-3>", self.klik)
@@ -134,6 +137,8 @@ class Minesweeper():
             self.velikost = v
             self.mine = m
             self.pomoc = True if self.izbran_igralec.get() else False
+            if self.pomoc: self.poteza_racunalnika.grid_remove()
+            else: self.poteza_racunalnika.grid()
             self.nastavitve.destroy()
             self.gameactive = True
             self.nova_igra()
@@ -370,11 +375,12 @@ class Minesweeper():
 
     def prepusti_racunalniku(self):
         """ Pozene vzporedno vlakno, kjer racunalnik racuna potezo. """
-        self.p = None
-        self.inteligenca = racunalnik.Racunalnik(self)
-        self.vlakno = threading.Thread(target=self.razmisljaj)
-        self.vlakno.start()
-        self.platno.after(self.zakasnitev, self.konec_razmisljanja)
+        if self.gameactive:
+            self.p = None
+            self.inteligenca = racunalnik.Racunalnik(self)
+            self.vlakno = threading.Thread(target=self.razmisljaj)
+            self.vlakno.start()
+            self.platno.after(self.zakasnitev, self.konec_razmisljanja)
 
     def razmisljaj(self):
         """ Racunalnik izracuna naslednjo potezo. """
