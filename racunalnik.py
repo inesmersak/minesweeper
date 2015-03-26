@@ -15,6 +15,7 @@ class Racunalnik:
             if self.odpri:
                 poteza = self.odpri.pop()
             else:
+                self.simuliraj()
                 poteza = self.nakljucna_poteza()
         return poteza
 
@@ -35,7 +36,9 @@ class Racunalnik:
         return tuple([x, y, False])
 
     def simuliraj(self):
-        pass
+        rob = self.igra.doloci_rob()
+        self.igra.polje
+        print(rob)
 
     def zaprti_sosedje(self, x, y):
         sosedi = self.igra.vrni_sosednja_polja(x, y)

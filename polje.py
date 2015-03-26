@@ -24,3 +24,11 @@ class Polje():
             self.flagged = True if not self.flagged else False
             return True
         return False
+
+    def zakrij(self):
+        """ Zapre odprto polje. """
+        if self.odprto:
+            self.prikaz = ''
+            self.odprto = False
+            return True
+        return False

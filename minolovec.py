@@ -36,8 +36,8 @@ class Minesweeper():
         self.vlakno = None
         self.inteligenca = None
         self.p = None  # poteza
-        self.pomoc = False  # ali igralec zeli pomoc racunalnika ali ne
-        self.zakasnitev = 50  # zakasnitev risanja potez racunalnika
+        self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
+        self.zakasnitev = 100  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
         self.ozadje = '#BABABA'  # barva ozadja polj
@@ -137,8 +137,6 @@ class Minesweeper():
                     self.odpri_blok((x, y))
                     self.preveri()
 
-            print(self.doloci_rob())
-
             if self.gameactive and self.pomoc:
                 self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
 
@@ -225,7 +223,6 @@ class Minesweeper():
         if flag:
             kvad = self.izracunaj_kvadratek(x, y)
             self.platno.create_rectangle(*kvad, fill='#FF9696', width=1, outline='#000000')
-            # self.platno.create_text(sredina, text='f', fill='#FFFFFF')
             self.platno.create_image(sredina, image=self.zastava)
             self.preostale_mine.set(mine - 1)
         else:
@@ -276,6 +273,8 @@ class Minesweeper():
         return sosedi
 
     def doloci_rob(self):
+        """ Doloci, kje je rob odprtih polj. Zaprto polje je na robu, ce se na vsaj eni izmed stranic tega polja
+        nahajajo tri zaprta polja. """
         rob = []
         spodaj = True  # rob je spodaj
         zgoraj = True  # rob je zgoraj
@@ -317,6 +316,7 @@ class Minesweeper():
     # ***********************
 
     def prepusti_racunalniku(self):
+        """ Pozene vzporedno vlakno, kjer racunalnik racuna potezo. """
         self.p = None
         self.inteligenca = racunalnik.Racunalnik(self)
         self.vlakno = threading.Thread(target=self.razmisljaj)
@@ -324,12 +324,14 @@ class Minesweeper():
         self.platno.after(self.zakasnitev, self.konec_razmisljanja)
 
     def razmisljaj(self):
+        """ Racunalnik izracuna naslednjo potezo. """
         p = self.inteligenca.vrni_potezo()
         print(p)
         self.p = p
         self.vlakno = None
 
     def konec_razmisljanja(self):
+        """ Preveri, ali je racunalnik ze izracunal potezo. """
         if self.p is None:
             self.platno.after(self.zakasnitev, self.konec_razmisljanja)
         else:
@@ -353,6 +355,6 @@ class Minesweeper():
 
 
 root = Tk()
-igrica = Minesweeper(root, 10, 10)
+igrica = Minesweeper(root, 10, 20)
 igrica.prikazi_celotno_polje(True)
 root.mainloop()
