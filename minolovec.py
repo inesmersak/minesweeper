@@ -135,6 +135,7 @@ class Minesweeper():
             self.mine = m
             self.pomoc = True if self.izbran_igralec.get() else False
             self.nastavitve.destroy()
+            self.gameactive = True
             self.nova_igra()
 
     def okno_z_nastavitvami(self, *args):
@@ -142,6 +143,8 @@ class Minesweeper():
         self.nastavitve = Toplevel()
         self.nastavitve.title('Nastavitve')
         self.nastavitve.focus()
+
+        self.gameactive = False
 
         trenutna_velikost = StringVar()
         trenutna_velikost.set(self.velikost)
