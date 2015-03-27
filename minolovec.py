@@ -120,6 +120,8 @@ class Minesweeper():
         self.odprta_polja = []
         self.zastave = []
 
+        self.prikazi_celotno_polje(True)
+
         if self.pomoc:
             self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
 
@@ -242,7 +244,6 @@ class Minesweeper():
         """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
         uporabnik kliknil levo ali desno tipko. """
         if self.gameactive:
-            # print(vars(klik))
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
             if x < self.velikost and y < self.velikost:
@@ -286,7 +287,6 @@ class Minesweeper():
         else:
             tag = self.najdi_id(x, y)
             for t in tag:
-                # print(t)
                 self.platno.delete(t)
             self.platno.delete(self.platno.find_closest(*sredina))
             self.preostale_mine.set(mine + 1)
@@ -311,63 +311,13 @@ class Minesweeper():
     # SPREMLJANJE IGRE
     # ***********************
 
-    def vrni_sosednje_zastave(self, x, y):
-        """ Vrne stevilo trenutnih zastav v okolici polja, podana z x in y. """
-        zastave = 0
-        for z in range(max(0, x - 1), min(x + 2, self.velikost)):
-            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
-                if z != x or w != y:
-                    if self.polje[z][w].flagged:
-                        zastave += 1
-        return zastave
-
-    def vrni_sosednja_polja(self, x, y):
-        """ Vrne koordinate sosednjih polj polja, podanega z x in y. """
-        sosedi = []
-        for z in range(max(0, x - 1), min(x + 2, self.velikost)):
-            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
-                if z != x or w != y:
-                    sosedi.append((z, w))
-        return sosedi
-
-    def doloci_rob(self):
-        """ Doloci, kje je rob odprtih polj. Zaprto polje je na robu, ce se na vsaj eni izmed stranic tega polja
-        nahajajo tri zaprta polja. """
-        rob = []
-        spodaj = True  # rob je spodaj
-        zgoraj = True  # rob je zgoraj
-        levo = True  # rob je na levi
-        desno = True  # rob je na desni
-        for (x, y) in self.zaprta_polja:
-            for w in range(max(0, y - 1), min(y + 2, self.velikost)):
-                if zgoraj and x - 1 >= 0:
-                    if (x - 1, w) not in self.odprta_polja:
-                        zgoraj = False
-                if spodaj and x + 1 < self.velikost:
-                    if (x + 1, w) not in self.odprta_polja:
-                        spodaj = False
-            if zgoraj and x == 0: zgoraj = False  # ce je polje na zgornjem robu polja, zgornjega roba nima
-            if spodaj and x == self.velikost - 1: spodaj = False  # ce je polje na spodnjem robu polja, spodnjega roba
-            # nima
-
-            for z in range(max(0, x - 1), min(x + 2, self.velikost)):
-                if levo and y - 1 >= 0:
-                    if (z, y - 1) not in self.odprta_polja:
-                        levo = False
-                if desno and y + 1 < self.velikost:
-                    if (z, y + 1) not in self.odprta_polja:
-                        desno = False
-            if levo and y == 0: levo = False  # ce je polje na levem robu polja, levega roba nima
-            if desno and y == self.velikost - 1: desno = False  # ce je polje na desnem robu polja, desnega roba nima
-
-            if spodaj or zgoraj or levo or desno:
-                rob.append((x, y))
-
-            levo = True
-            desno = True
-            spodaj = True
-            zgoraj = True
-        return rob
+    def naredi_matriko(self):
+        """ Naredi matriko, ki prikazuje trenutno stanje na polju. """
+        matrika = [['' for _ in range(self.velikost)] for _ in range(self.velikost)]
+        for r in self.polje:
+            for k in r:
+                matrika[k.x][k.y] = k.prikaz
+        return matrika
 
     # ***********************
     # INTELIGENCA
@@ -377,15 +327,15 @@ class Minesweeper():
         """ Pozene vzporedno vlakno, kjer racunalnik racuna potezo. """
         if self.gameactive:
             self.p = None
-            self.inteligenca = racunalnik.Racunalnik(self)
+            self.inteligenca = racunalnik.Racunalnik()
             self.vlakno = threading.Thread(target=self.razmisljaj)
             self.vlakno.start()
             self.platno.after(self.zakasnitev, self.konec_razmisljanja)
 
     def razmisljaj(self):
         """ Racunalnik izracuna naslednjo potezo. """
-        p = self.inteligenca.vrni_potezo()
-        print(p)
+        m = self.naredi_matriko()
+        p = self.inteligenca.vrni_potezo(m)
         self.p = p
         self.vlakno = None
 
@@ -415,5 +365,4 @@ class Minesweeper():
 
 root = Tk()
 igrica = Minesweeper(root, 10, 20)
-igrica.prikazi_celotno_polje(True)
 root.mainloop()
