@@ -82,6 +82,7 @@ class Minesweeper():
         self.platno.bind("<Button-3>", self.klik)
         master.bind("<F1>", self.nova_igra)
         master.bind("<F2>", self.okno_z_nastavitvami)
+        master.bind("<Escape>", self.izhod)
 
         self.okno_z_nastavitvami()
 
@@ -178,7 +179,7 @@ class Minesweeper():
 
         self.nastavitve.bind("<Return>", self.ponastavi)
 
-    def izhod(self):
+    def izhod(self, *args):
         if self.vlakno is not None:
             self.vlakno.join()
         self.master.destroy()
