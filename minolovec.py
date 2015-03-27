@@ -37,9 +37,10 @@ class Minesweeper():
         self.inteligenca = None
         self.p = None  # poteza
         self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
-        self.zakasnitev = 100  # zakasnitev risanja potez racunalnika
+        self.zakasnitev = 80  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
+        self.master = master  # da ga lahko kasneje unicimo
         self.ozadje = '#BABABA'  # barva ozadja polj
         self.zastava = PhotoImage(file='flag_small.png')  # nalozimo sliko zastave
         self.bomba = PhotoImage(file='bomb_small.png')  # nalozimo sliko mine
@@ -60,7 +61,7 @@ class Minesweeper():
         podmenu.add_command(label='Nova igra    [F1]', command=self.nova_igra)
         podmenu.add_command(label='Nastavitve   [F2]', command=self.okno_z_nastavitvami)
         podmenu.add_separator()
-        podmenu.add_command(label='Izhod', command=master.destroy)
+        podmenu.add_command(label='Izhod', command=self.izhod)
         menu.add_cascade(label='File', menu=podmenu)
 
         Label(okvir, text='Zmage: ').grid(row=0, column=0)
@@ -108,6 +109,9 @@ class Minesweeper():
 
     def nova_igra(self, *args):
         """ Resetira vse spremenljivke in pripravi novo igro. """
+        if self.vlakno is not None:
+            self.vlakno.join()
+
         self.polje = [[Polje(j, i) for i in range(self.velikost)] for j in range(self.velikost)]
         self.napolni()
         self.preostale_mine.set(self.mine)
@@ -173,6 +177,11 @@ class Minesweeper():
         Button(self.nastavitve, text='V redu', command=self.ponastavi).grid(row=3, column=1)
 
         self.nastavitve.bind("<Return>", self.ponastavi)
+
+    def izhod(self):
+        if self.vlakno is not None:
+            self.vlakno.join()
+        self.master.destroy()
 
     # ***********************
     # MEHANIZEM IGRE

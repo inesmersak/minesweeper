@@ -3,7 +3,7 @@ import random
 
 class Racunalnik:
     def __init__(self):
-        self.odpri = []
+        self.odpri = set()
         self.oznaci = []
 
         self.matrika = []
@@ -27,9 +27,10 @@ class Racunalnik:
                 else:
                     self.zaprta_polja.append((x, y))
 
-    def vrni_potezo(self, matrika=None):
+    def vrni_potezo(self, matrika):
         self.matrika = matrika
         self.pridobi_podatke()
+        # print(self.odpri)
 
         if self.odpri:
             poteza = self.odpri.pop()
@@ -49,10 +50,10 @@ class Racunalnik:
             sosedi = self.zaprti_sosedje(x, y)
             if v == zastave:
                 for (z, w) in sosedi:
-                    self.odpri.append((z, w, False))
+                    self.odpri.add((z, w, False))
             elif len(sosedi) + zastave == v:
                 for (z, w) in sosedi:
-                    self.odpri.append((z, w, True))
+                    self.odpri.add((z, w, True))
 
     def nakljucna_poteza(self):
         (x, y) = random.choice(self.zaprta_polja)
