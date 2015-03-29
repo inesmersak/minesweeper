@@ -140,3 +140,13 @@ class Racunalnik:
                     if len(zaprti_sosedi) < v:
                         return False
         return True
+
+    def simuliraj_potezo(self, p):
+        (x, y, m) = p
+        self.zaprta_polja.remove((x, y))
+        if m:
+            self.matrika[x][y] = 'f'
+            self.zastave.append((x, y))
+        else:
+            self.matrika[x][y] = '?'  # '?' bo oznaceval odprto polje, katerega vrednost ne poznamo
+            self.odprta_polja.append((x, y))
