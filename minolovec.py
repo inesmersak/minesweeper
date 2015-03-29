@@ -153,6 +153,11 @@ class Minesweeper():
             self.gameactive = True
             self.nova_igra()
 
+    def posodobi_max_stevilo_min(self):
+        """ Glede na vneseno velikost polja posodobi zgornjo mejo za stevilo min. """
+        velikost = int(self.izbrana_velikost.get())
+        self.izbrane_mine.config(to=velikost**2)
+
     def okno_z_nastavitvami(self, *args):
         """ Odpre okno z nastavitvami. """
         self.nastavitve = Toplevel()
@@ -164,14 +169,16 @@ class Minesweeper():
         trenutna_velikost = StringVar()
         trenutna_velikost.set(self.velikost)
         Label(self.nastavitve, text='Velikost polja: ').grid(row=0, column=0, sticky='W')
-        self.izbrana_velikost = Spinbox(self.nastavitve, from_=2, to=self.maxvelikost, textvariable=trenutna_velikost)
+        self.izbrana_velikost = Spinbox(self.nastavitve, from_=2, to=self.maxvelikost,
+                                        textvariable=trenutna_velikost, command=self.posodobi_max_stevilo_min)
         self.izbrana_velikost.grid(row=0, column=1)
         self.izbrana_velikost.focus()
 
         trenutne_mine = StringVar()
         trenutne_mine.set(self.mine)
         Label(self.nastavitve, text='Število min: ').grid(row=1, column=0, sticky='W')
-        self.izbrane_mine = Spinbox(self.nastavitve, from_=1, to=int(self.izbrana_velikost.get())**2, textvariable=trenutne_mine)
+        self.izbrane_mine = Spinbox(self.nastavitve, from_=1, to=int(self.izbrana_velikost.get())**2,
+                                    textvariable=trenutne_mine)
         self.izbrane_mine.grid(row=1, column=1)
 
         self.izbran_igralec = IntVar()
