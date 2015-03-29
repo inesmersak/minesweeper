@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from PIL import Image, ImageTk
 from polje import *
 import racunalnik
@@ -138,20 +139,26 @@ class Minesweeper():
     # ***********************
 
     def ponastavi(self, *args):
-        m = int(self.izbrane_mine.get())
-        v = int(self.izbrana_velikost.get())
-        if m > v ** 2:
-            # vrnemo error
-            pass
-        else:
-            self.velikost = v
-            self.mine = m
-            self.pomoc = True if self.izbran_igralec.get() else False
-            if self.pomoc: self.poteza_racunalnika.grid_remove()
-            else: self.poteza_racunalnika.grid()
-            self.nastavitve.destroy()
-            self.gameactive = True
-            self.nova_igra()
+        try:
+            m = int(self.izbrane_mine.get())
+            v = int(self.izbrana_velikost.get())
+            if m > v ** 2:
+                messagebox.showerror('Nepravilno število min', 'Vnešeno število min je večje od površine polja!')
+                self.nastavitve.focus()
+                self.izbrana_velikost.focus()
+            else:
+                self.velikost = v
+                self.mine = m
+                self.pomoc = True if self.izbran_igralec.get() else False
+                if self.pomoc: self.poteza_racunalnika.grid_remove()
+                else: self.poteza_racunalnika.grid()
+                self.nastavitve.destroy()
+                self.gameactive = True
+                self.nova_igra()
+        except ValueError:
+            messagebox.showerror('Nepravilna vrednost', 'Vnesli ste nepravilno vrednost!')
+            self.nastavitve.focus()
+            self.izbrana_velikost.focus()
 
     def posodobi_max_stevilo_min(self):
         """ Glede na vneseno velikost polja posodobi zgornjo mejo za stevilo min. """
@@ -162,6 +169,7 @@ class Minesweeper():
         """ Odpre okno z nastavitvami. """
         self.nastavitve = Toplevel()
         self.nastavitve.title('Nastavitve')
+        self.nastavitve.transient(self.master)  # poskrbi, da je okno z nastavitvami vedno nad glavnim oknom
         self.nastavitve.focus()
 
         self.gameactive = False
