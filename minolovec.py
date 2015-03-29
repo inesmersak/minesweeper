@@ -61,7 +61,7 @@ class Minesweeper():
         podmenu.add_command(label='Nova igra    [F1]', command=self.nova_igra)
         podmenu.add_command(label='Nastavitve   [F2]', command=self.okno_z_nastavitvami)
         podmenu.add_separator()
-        podmenu.add_command(label='Izhod', command=self.izhod)
+        podmenu.add_command(label='Izhod           [Esc]', command=self.izhod)
         menu.add_cascade(label='File', menu=podmenu)
 
         Label(okvir, text='Zmage: ').grid(row=0, column=0)
