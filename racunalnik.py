@@ -129,3 +129,14 @@ class Racunalnik:
             spodaj = True
             zgoraj = True
         return rob
+
+    def preveri_veljavnost_polja(self):
+        # tukaj se nekaj o preostalih minah
+        for x in range(self.velikost_matrike):
+            for y in range(self.velikost_matrike):
+                v = self.matrika[x][y]
+                if isinstance(v, int):
+                    zaprti_sosedi = self.zaprti_sosedje(x, y)
+                    if len(zaprti_sosedi) < v:
+                        return False
+        return True
