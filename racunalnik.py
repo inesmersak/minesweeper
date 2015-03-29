@@ -143,10 +143,23 @@ class Racunalnik:
 
     def simuliraj_potezo(self, p):
         (x, y, m) = p
-        self.zaprta_polja.remove((x, y))
-        if m:
-            self.matrika[x][y] = 'f'
-            self.zastave.append((x, y))
-        else:
-            self.matrika[x][y] = '?'  # '?' bo oznaceval odprto polje, katerega vrednost ne poznamo
-            self.odprta_polja.append((x, y))
+        v = self.matrika[x][y]
+        if v == '':  # polje je zaprto
+            self.zaprta_polja.remove((x, y))
+            if m:
+                self.matrika[x][y] = 'f'
+                self.zastave.append((x, y))
+            else:
+                self.matrika[x][y] = '?'  # '?' bo oznaceval odprto polje, katerega vrednost ne poznamo
+                self.odprta_polja.append((x, y))
+
+    def preklici_potezo(self, p):
+        (x, y, m) = p
+        v = self.matrika[x][y]
+        if v != '':  # polje je odprto ali zastavica, torej smo naredili neko potezo na tem polju
+            if m:
+                self.zastave.remove((x, y))
+            else:
+                self.odprta_polja.remove((x, y))
+            self.matrika[x][y] = ''
+            self.zaprta_polja.append((x, y))
