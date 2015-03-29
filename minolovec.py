@@ -1,4 +1,5 @@
 from tkinter import *
+from PIL import Image, ImageTk
 from polje import *
 import racunalnik
 import random
@@ -42,8 +43,10 @@ class Minesweeper():
         # --- GUI ---
         self.master = master  # da ga lahko kasneje unicimo
         self.ozadje = '#BABABA'  # barva ozadja polj
-        self.zastava = PhotoImage(file='flag_small.png')  # nalozimo sliko zastave
-        self.bomba = PhotoImage(file='bomb_small.png')  # nalozimo sliko mine
+        zastava = Image.open('flag_small.png')
+        self.zastava = ImageTk.PhotoImage(zastava)  # nalozimo sliko zastave
+        bomba = Image.open('bomb_small.png')
+        self.bomba = ImageTk.PhotoImage(bomba)  # nalozimo sliko mine
         self.nastavitve = None  # okno z nastavitvami
         self.maxvelikost = 30  # maksimalna velikost, ki jo bo uporabnik lahko izbral pri nastavitvah
         self.izbrana_velikost = None  # velikost, ki jo je uporabnik izbral
