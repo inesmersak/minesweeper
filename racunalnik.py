@@ -8,6 +8,7 @@ class Racunalnik:
 
         self.matrika = []
         self.velikost_matrike = 0
+        self.preostale_mine = 0
         self.odprta_polja = []
         self.zaprta_polja = []
         self.zastave = []
@@ -27,8 +28,9 @@ class Racunalnik:
                 else:
                     self.zaprta_polja.append((x, y))
 
-    def vrni_potezo(self, matrika):
+    def vrni_potezo(self, matrika, mine):
         self.matrika = matrika
+        self.preostale_mine = mine
         self.pridobi_podatke()
         # print(self.odpri)
 
@@ -54,6 +56,15 @@ class Racunalnik:
             elif len(sosedi) + zastave == v:
                 for (z, w) in sosedi:
                     self.odpri.add((z, w, True))
+        if not self.odpri:
+            print('boo')
+            if len(self.zaprta_polja) == self.preostale_mine:
+                for (z, w) in self.zaprta_polja:
+                    self.odpri.add((z, w, True))
+            elif self.preostale_mine == 0:  # tale opcija je mogoce ze pokrita v zgornji for zanki
+                for (z, w) in self.zaprta_polja:
+                    self.odpri.add((z, w, False))
+            print(self.odpri)
 
     def nakljucna_poteza(self):
         (x, y) = random.choice(self.zaprta_polja)

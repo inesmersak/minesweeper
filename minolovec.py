@@ -363,7 +363,7 @@ class Minesweeper():
     def razmisljaj(self):
         """ Racunalnik izracuna naslednjo potezo. """
         m = self.naredi_matriko()
-        p = self.inteligenca.vrni_potezo(m)
+        p = self.inteligenca.vrni_potezo(m, int(self.preostale_mine.get()))
         self.p = p
         self.vlakno = None
 
