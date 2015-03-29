@@ -168,8 +168,8 @@ class Racunalnik:
         v = self.matrika[x][y]
         if v != '':  # polje je odprto ali zastavica, torej smo naredili neko potezo na tem polju
             if m:
-                self.preostale_mine += 1
                 self.zastave.remove((x, y))
+                self.preostale_mine += 1
             else:
                 self.odprta_polja.remove((x, y))
             self.matrika[x][y] = ''
