@@ -57,14 +57,12 @@ class Racunalnik:
                 for (z, w) in sosedi:
                     self.odpri.add((z, w, True))
         if not self.odpri:
-            print('boo')
             if len(self.zaprta_polja) == self.preostale_mine:
                 for (z, w) in self.zaprta_polja:
                     self.odpri.add((z, w, True))
             elif self.preostale_mine == 0:  # tale opcija je mogoce ze pokrita v zgornji for zanki
                 for (z, w) in self.zaprta_polja:
                     self.odpri.add((z, w, False))
-            print(self.odpri)
 
     def nakljucna_poteza(self):
         (x, y) = random.choice(self.zaprta_polja)
@@ -160,6 +158,7 @@ class Racunalnik:
             if m:
                 self.matrika[x][y] = 'f'
                 self.zastave.append((x, y))
+                self.preostale_mine -= 1
             else:
                 self.matrika[x][y] = '?'  # '?' bo oznaceval odprto polje, katerega vrednost ne poznamo
                 self.odprta_polja.append((x, y))
@@ -169,6 +168,7 @@ class Racunalnik:
         v = self.matrika[x][y]
         if v != '':  # polje je odprto ali zastavica, torej smo naredili neko potezo na tem polju
             if m:
+                self.preostale_mine += 1
                 self.zastave.remove((x, y))
             else:
                 self.odprta_polja.remove((x, y))
