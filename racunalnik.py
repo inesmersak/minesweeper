@@ -153,8 +153,13 @@ class Racunalnik:
                     st_min += 1
                 elif veljavne_komb[j][i] == 'e':
                     st_odprtih += 1
-            verjetnost = st_odprtih / (st_odprtih + st_min)
-            if verjetnost > v:
+            verjetnost = st_odprtih / (len(veljavne_komb))
+            if verjetnost == 1:
+                (z, w) = kvad[i]
+                p = (z, w, False)
+                v = verjetnost
+                break
+            elif verjetnost > v:
                 (z, w) = kvad[i]
                 p = (z, w, False)
                 v = verjetnost
@@ -166,7 +171,8 @@ class Racunalnik:
         print(p, verjetnost)
         for (x, y) in self.zaprta_polja:
             zaprti_sosedi = self.zaprti_sosedje(x, y)
-            if len(zaprti_sosedi) == 0 or len(zaprti_sosedi) == 8:
+            odprti_sosedi = self.odprti_sosedje(x, y)
+            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 2:
                 pass
             else:
                 zaprti_sosedi.append((x, y))
@@ -208,6 +214,14 @@ class Racunalnik:
             if s in self.zaprta_polja:
                 zaprti.append(s)
         return zaprti
+
+    def odprti_sosedje(self, x, y):
+        sosedi = self.vrni_sosednja_polja(x, y)
+        odprti = []
+        for s in sosedi:
+            if s in self.odprta_polja:
+                odprti.append(s)
+        return odprti
 
     def doloci_rob(self):
         """ Doloci, kje je rob odprtih polj. Zaprto polje je na robu, ce se na vsaj eni izmed stranic tega polja
