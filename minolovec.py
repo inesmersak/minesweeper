@@ -39,7 +39,7 @@ class Minesweeper():
         self.inteligenca = None
         self.p = None  # poteza
         self.pomoc = True  # ali igralec zeli pomoc racunalnika ali ne
-        self.zakasnitev = 80  # zakasnitev risanja potez racunalnika
+        self.zakasnitev = 30  # zakasnitev risanja potez racunalnika
 
         # --- GUI ---
         self.master = master  # da ga lahko kasneje unicimo
@@ -271,7 +271,7 @@ class Minesweeper():
     def klik(self, klik):
         """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
         uporabnik kliknil levo ali desno tipko. """
-        if self.gameactive:
+        if self.gameactive and not self.pomoc:
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
             if x < self.velikost and y < self.velikost:
