@@ -1,7 +1,8 @@
 import random
 import itertools
 from copy import deepcopy
-
+import time
+import datetime
 
 class Racunalnik:
     def __init__(self):
@@ -79,25 +80,6 @@ class Racunalnik:
             stevec = imenovalec - self.preostale_mine
         return stevec / imenovalec
 
-    def vrni_kombinacije(self, moznosti, dolzina, moznost=None):
-        """ V seznam 'moznosti' spravlja vse mozne kombinacije dolzine 'dolzina' in pri tem uporablja rekurzijo. """
-        if moznost is None:
-            moznost = []
-        if dolzina == 0:
-            moznosti.append(moznost)
-        else:
-            self.vrni_kombinacije(moznosti, dolzina - 1, moznost + ['e'])  # e = empty, predstavlja prazno polje
-            self.vrni_kombinacije(moznosti, dolzina - 1, moznost + ['f'])
-
-    def vrni_kombinacije2(self, dolzina):
-        k = set()
-        a = itertools.combinations_with_replacement(['e', 'f'], 5)
-        for x in a:
-            p = itertools.permutations(x)
-            for y in p:
-                k.add(y)
-        return list(k)
-
     def vrni_koordinate_podpolja(self, koord):
         """ Vrne zacetno in koncno tocko 5 x 5 podpolja okoli koordinate (x, y). """
         (x, y) = koord
@@ -136,8 +118,7 @@ class Racunalnik:
     def preizkusi_kombinacije(self, kvad):
         """ Za dana polja iz seznama 'kvad' preizkusi vse mozne kombinacije. """
         st_polj = len(kvad)
-        komb = []
-        self.vrni_kombinacije(komb, st_polj)
+        komb = list(set(itertools.product('ef', repeat=st_polj)))
         p = None
         v = 0
         veljavne_komb = []
