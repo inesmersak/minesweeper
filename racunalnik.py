@@ -50,7 +50,7 @@ class Racunalnik:
         for (x, y) in self.odprta_polja:
             v = self.matrika[x][y]
             zastave = self.vrni_sosednje_zastave(x, y)
-            sosedi = self.zaprti_sosedje(x, y)
+            sosedi = self.zaprti_sosedje(x, y, True, False)
             if v == zastave:
                 for (z, w) in sosedi:
                     self.odpri.add((z, w, False))
@@ -96,15 +96,15 @@ class Racunalnik:
             p = itertools.permutations(x)
             for y in p:
                 k.add(y)
-        return k
+        return list(k)
 
-    def vrni_podpolje(self, koord):
+    def vrni_koordinate_podpolja(self, koord):
         """ Vrne zacetno in koncno tocko 5 x 5 podpolja okoli koordinate (x, y). """
         (x, y) = koord
         v1 = max(0, x - 2)
-        v2 = min(x + 2, self.velikost_matrike)
+        v2 = min(x + 2, self.velikost_matrike-1)
         s1 = max(0, y - 2)
-        s2 = min(y + 2, self.velikost_matrike)
+        s2 = min(y + 2, self.velikost_matrike-1)
         return (v1, s1), (v2, s2)
 
     def preveri_veljavnost_podpolja(self, matrika, zacetek, konec):
@@ -118,27 +118,40 @@ class Racunalnik:
                     zastave = self.vrni_sosednje_zastave(i, j)
                     # if zastave
 
+    def preveri_veljavnost_polja(self, zac, kon):
+        (i1, j1) = zac
+        (i2, j2) = kon
+        for x in range(i1, i2+1):
+            for y in range(j1, j2+1):
+                v = self.matrika[x][y]
+                if isinstance(v, int):
+                    zaprti_sosedi = self.zaprti_sosedje(x, y, True, False)
+                    zastave = self.vrni_sosednje_zastave(x, y)
+                    if len(zaprti_sosedi) + zastave < v:
+                        return False
+                    elif zastave > v:
+                        return False
+        return True
+
     def preizkusi_kombinacije(self, kvad):
         """ Za dana polja iz seznama 'kvad' preizkusi vse mozne kombinacije. """
-        komb = []
         st_polj = len(kvad)
+        komb = []
         self.vrni_kombinacije(komb, st_polj)
-        # print(len(kvad), len(komb))
         p = None
         v = 0
         veljavne_komb = []
         for kombinacija in komb:
             if kombinacija.count('f') <= self.preostale_mine:
-                # zacasna_matrika = deepcopy(self.matrika)
-                # sredinski_kvad = kvad[len(kvad)-1]  # kvadratek v sredini smo v simuliraj dodali na konec kvad
-                # zac, kon = self.vrni_podpolje(sredinski_kvad)
+                sredinski_kvad = kvad[len(kvad)-1]  # kvadratek v sredini smo v simuliraj dodali na konec kvad
                 poteze_za_razveljavit = []
                 for i in range(len(kombinacija)):
                     (x, y) = kvad[i]
                     m = True if kombinacija[i] == 'f' else False
                     self.simuliraj_potezo((x, y, m))
                     poteze_za_razveljavit.append((x, y, m))
-                if self.preveri_veljavnost_polja():
+                zac, kon = self.vrni_koordinate_podpolja(sredinski_kvad)
+                if self.preveri_veljavnost_polja(zac, kon):
                     veljavne_komb.append(kombinacija)
                 while poteze_za_razveljavit:
                     self.preklici_potezo(poteze_za_razveljavit.pop())
@@ -170,8 +183,7 @@ class Racunalnik:
         verjetnost = self.izracunaj_verjetnost(p)
         print(p, verjetnost)
         for (x, y) in self.zaprta_polja:
-            zaprti_sosedi = self.zaprti_sosedje(x, y)
-            odprti_sosedi = self.odprti_sosedje(x, y)
+            zaprti_sosedi, odprti_sosedi = self.zaprti_sosedje(x, y, True, True)
             if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 2:
                 pass
             else:
@@ -207,20 +219,32 @@ class Racunalnik:
                     sosedi.append((z, w))
         return sosedi
 
-    def zaprti_sosedje(self, x, y):
-        sosedi = self.vrni_sosednja_polja(x, y)
-        zaprti = []
-        for s in sosedi:
-            if s in self.zaprta_polja:
-                zaprti.append(s)
-        return zaprti
+    def zaprti_sosedje(self, x, y, zap=True, odp=True):
+        """ zap = True vrne zaprte, odp = True vrne odprte, zap in odp = True vrne oboje """
+        # sosedi = self.vrni_sosednja_polja(x, y)
+        if zap: zaprti = []
+        if odp: odprti = []
+        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
+            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
+                if z != x or w != y:
+                    polje = (z, w)
+                    if polje in self.zaprta_polja and zap:
+                        zaprti.append(polje)
+                    elif polje in self.odprta_polja and odp:
+                        odprti.append(polje)
+        if zap and odp: return zaprti, odprti
+        elif zap: return zaprti
+        elif odp: return odprti
 
     def odprti_sosedje(self, x, y):
-        sosedi = self.vrni_sosednja_polja(x, y)
+        # sosedi = self.vrni_sosednja_polja(x, y)
         odprti = []
-        for s in sosedi:
-            if s in self.odprta_polja:
-                odprti.append(s)
+        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
+            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
+                if z != x or w!= y:
+                    polje = (z, w)
+                    if polje in self.odprta_polja:
+                        odprti.append(polje)
         return odprti
 
     def doloci_rob(self):
@@ -262,20 +286,6 @@ class Racunalnik:
             spodaj = True
             zgoraj = True
         return rob
-
-    def preveri_veljavnost_polja(self):
-        # tukaj se nekaj o preostalih minah
-        for x in range(self.velikost_matrike):
-            for y in range(self.velikost_matrike):
-                v = self.matrika[x][y]
-                if isinstance(v, int):
-                    zaprti_sosedi = self.zaprti_sosedje(x, y)
-                    zastave = self.vrni_sosednje_zastave(x, y)
-                    if len(zaprti_sosedi) + zastave < v:
-                        return False
-                    elif zastave > v:
-                        return False
-        return True
 
     def simuliraj_potezo(self, p):
         (x, y, m) = p
