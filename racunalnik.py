@@ -1,8 +1,6 @@
 import random
 import itertools
-from copy import deepcopy
 import time
-import datetime
 
 
 class Racunalnik:
@@ -124,7 +122,6 @@ class Racunalnik:
         p = None  # na zacetku nimamo poteze
         v = 0  # verjetnost, da je ta poteza pravilna, je nic
         veljavne_komb = []
-        # prej = time.clock()
         for kombinacija in komb:  # za vsako kombinacijo preverimo, ali je mozna
             if kombinacija.count('f') <= self.preostale_mine:  # ce je zastavic vec kot preostalih min, kombinacija
                 # ni mozna
@@ -141,9 +138,6 @@ class Racunalnik:
                     veljavne_komb.append(kombinacija)  # ce je polje veljavno, je ta kombinacija mozna
                 while poteze_za_razveljavit:
                     self.preklici_potezo(poteze_za_razveljavit.pop())
-        # potem = time.clock()
-        # print("cas za vse kombinacije: ", potem-prej)
-        # prej = time.clock()
 
         # sedaj izracunamo verjetnosti za to, ali so polja odprta, s pomocjo kombinacij, ki so nam ostale
         for i in range(st_polj):
@@ -166,8 +160,6 @@ class Racunalnik:
                 (z, w) = kvad[i]
                 p = (z, w, False)
                 v = verjetnost
-        # potem = time.clock()
-        # print("cas za verjetnosti potez: ", potem - prej)
         return p, v  # vrnemo potezo z najboljso verjetnostjo
 
     def simuliraj(self):
