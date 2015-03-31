@@ -15,7 +15,7 @@ class Racunalnik:
         self.zaprta_polja = set()
         self.zastave = set()
 
-        self.debugmode = True  # ce smo v debug modeu, program izpisuje koristne informacije o poteku razmisljanja na
+        self.debugmode = False  # ce smo v debug modeu, program izpisuje koristne informacije o poteku razmisljanja na
         # zaslon
 
     def pridobi_podatke(self, matrika):
@@ -77,6 +77,40 @@ class Racunalnik:
         (x, y) = random.choice(list(self.zaprta_polja))
         return tuple([x, y, False])
 
+    def simuliraj(self):
+        """ Za vsako polje, ki ima vsaj enega odprtega soseda, vzame vse zaprte sosede in to polje ter na teh poljih
+        preizkusi vse mozne kombinacije s pomocjo metode 'preizkusi_kombinacije' - tako dobi najboljso mozno potezo
+        na teh poljih. To ponovi za vsako polje z vsaj enim odprtim sosedom in primerja verjetnost dobljenih potez,
+        na koncu pa vrne potezo z najvecjo verjetnostjo. """
+        if self.debugmode: prej = time.clock()
+        p = self.nakljucna_poteza()  # na zacetku vzamemo neko nakljucno potezo, zracunamo njegovo verjetnost,
+        # potem iscemo potezo, ki ima boljso verjetnost
+        verjetnost = self.izracunaj_verjetnost(p)
+        if self.debugmode: print(p, verjetnost)
+        for (x, y) in self.zaprta_polja:
+            zaprti_sosedi, odprti_sosedi = self.sosedje(x, y, True, True)
+            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 1:  # pregledujemo le polja z vsaj enim odprtim in
+                # vsaj enim zaprtim sosedom
+                pass
+            else:
+                if self.debugmode: print("Pregledujemo polje ", x, y)
+                zaprti_sosedi.append((x, y))
+                (p1, verp1) = self.preizkusi_kombinacije(zaprti_sosedi)  # dobimo najboljso mozno potezo na teh poljih
+                if verp1 == 1:  # poteza p1 je gotova, lahko nehamo razmisljat
+                    p = p1
+                    verjetnost = verp1
+                    break
+                elif verp1 > verjetnost:  # verjetnost poteze p1 je boljsa od vseh do zdaj, zapomnemo si novo potezo
+                    # in verjetnost
+                    p = p1
+                    verjetnost = verp1
+        if self.debugmode:
+            potem = time.clock()
+            print(p, verjetnost)
+            print("Čas za kalkulacijo: ", potem - prej)
+            print("---------------------")
+        return p  # vrnemo potezo z najvecjo verjetnostjo
+
     def izracunaj_verjetnost(self, p):
         """ Izracuna verjetnost, da je poteza pravilna, na osnovi celotnega polja. """
         (x, y, m) = p
@@ -86,32 +120,6 @@ class Racunalnik:
         else:  # zanima nas, kaksna je verjetnost, da je polje prazno
             stevec = imenovalec - self.preostale_mine
         return stevec / imenovalec
-
-    def vrni_koordinate_podpolja(self, koord):
-        """ Vrne zacetno in koncno tocko 5 x 5 podpolja s srediscem v koordinati (x, y). """
-        (x, y) = koord
-        v1 = max(0, x - 2)
-        v2 = min(x + 2, self.velikost_matrike - 1)
-        s1 = max(0, y - 2)
-        s2 = min(y + 2, self.velikost_matrike - 1)
-        return (v1, s1), (v2, s2)
-
-    def preveri_veljavnost_polja(self, zac, kon):
-        """ Preveri, ali je polje od tocke zac do tocke kon veljavno. """
-        (i1, j1) = zac  # i1 je vrstica, kjer zacnemo; j1 je stolpec, kjer zacnemo
-        (i2, j2) = kon  # i2 je vrstica, kjer koncamo; j2 je stolpec, kjer koncamo
-        for x in range(i1, i2+1):
-            for y in range(j1, j2+1):
-                v = self.matrika[x][y]
-                if isinstance(v, int):
-                    zaprti_sosedi = self.sosedje(x, y, True, False)
-                    zastave = self.vrni_sosednje_zastave(x, y)
-                    if len(zaprti_sosedi) + zastave < v:  # ce imamo v okolici manj zastavic in zaprtih polj,
-                        # kot je min v okolici tega kvadratka, potem je polje neveljavno
-                        return False
-                    elif zastave > v:  # ce imamo v okolici kvadratka prevec zastav, je polje prav tako neveljavno
-                        return False
-        return True
 
     def preizkusi_kombinacije(self, kvad):
         """ Za dana polja iz seznama 'kvad' generira vse mozne kombinacije min in praznih polj, neveljavne zavrze,
@@ -125,7 +133,7 @@ class Racunalnik:
         for kombinacija in komb:  # za vsako kombinacijo preverimo, ali je mozna
             if kombinacija.count('f') <= self.preostale_mine:  # ce je zastavic vec kot preostalih min, kombinacija
                 # ni mozna
-                sredinski_kvad = kvad[len(kvad)-1]  # kvadratek v sredini je vedno na koncu seznama kvad
+                sredinski_kvad = kvad[len(kvad) - 1]  # kvadratek v sredini je vedno na koncu seznama kvad
                 poteze_za_razveljavit = []
                 for i in range(len(kombinacija)):  # za vsako mozno kombinacijo simuliramo poteze in s tem napolnimo
                     # polje, preverimo, ali je polje se vedno veljavno, na koncu pa preklicemo vse narejene poteze
@@ -162,49 +170,31 @@ class Racunalnik:
                 v = verjetnost
         return p, v  # vrnemo potezo z najboljso verjetnostjo
 
-    def simuliraj(self):
-        """ Za vsako polje, ki ima vsaj enega odprtega soseda, vzame vse zaprte sosede in to polje ter na teh poljih
-        preizkusi vse mozne kombinacije s pomocjo metode 'preizkusi_kombinacije' - tako dobi najboljso mozno potezo
-        na teh poljih. To ponovi za vsako polje z vsaj enim odprtim sosedom in primerja verjetnost dobljenih potez,
-        na koncu pa vrne potezo z najvecjo verjetnostjo. """
-        if self.debugmode: prej = time.clock()
-        p = self.nakljucna_poteza()  # na zacetku vzamemo neko nakljucno potezo, zracunamo njegovo verjetnost,
-        # potem iscemo potezo, ki ima boljso verjetnost
-        verjetnost = self.izracunaj_verjetnost(p)
-        if self.debugmode: print(p, verjetnost)
-        for (x, y) in self.zaprta_polja:
-            zaprti_sosedi, odprti_sosedi = self.sosedje(x, y, True, True)
-            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 1:  # pregledujemo le polja z vsaj enim odprtim in
-                # vsaj enim zaprtim sosedom
-                pass
-            else:
-                if self.debugmode: print("Pregledujemo polje ", x, y)
-                zaprti_sosedi.append((x, y))
-                (p1, verp1) = self.preizkusi_kombinacije(zaprti_sosedi)  # dobimo najboljso mozno potezo na teh poljih
-                if verp1 == 1:  # poteza p1 je gotova, lahko nehamo razmisljat
-                    p = p1
-                    verjetnost = verp1
-                    break
-                elif verp1 > verjetnost:  # verjetnost poteze p1 je boljsa od vseh do zdaj, zapomnemo si novo potezo
-                    # in verjetnost
-                    p = p1
-                    verjetnost = verp1
-        if self.debugmode:
-            potem = time.clock()
-            print(p, verjetnost)
-            print("Čas za kalkulacijo: ", potem - prej)
-            print("---------------------")
-        return p  # vrnemo potezo z najvecjo verjetnostjo
+    def preveri_veljavnost_polja(self, zac, kon):
+        """ Preveri, ali je polje od tocke zac do tocke kon veljavno. """
+        (i1, j1) = zac  # i1 je vrstica, kjer zacnemo; j1 je stolpec, kjer zacnemo
+        (i2, j2) = kon  # i2 je vrstica, kjer koncamo; j2 je stolpec, kjer koncamo
+        for x in range(i1, i2 + 1):
+            for y in range(j1, j2 + 1):
+                v = self.matrika[x][y]
+                if isinstance(v, int):
+                    zaprti_sosedi = self.sosedje(x, y, True, False)
+                    zastave = self.vrni_sosednje_zastave(x, y)
+                    if len(zaprti_sosedi) + zastave < v:  # ce imamo v okolici manj zastavic in zaprtih polj,
+                        # kot je min v okolici tega kvadratka, potem je polje neveljavno
+                        return False
+                    elif zastave > v:  # ce imamo v okolici kvadratka prevec zastav, je polje prav tako neveljavno
+                        return False
+        return True
 
-    def vrni_sosednje_zastave(self, x, y):
-        """ Vrne stevilo trenutnih zastav v okolici polja, podanega z x in y. """
-        zastave = 0
-        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
-            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
-                if z != x or w != y:
-                    if (z, w) in self.zastave:
-                        zastave += 1
-        return zastave
+    def vrni_koordinate_podpolja(self, koord):
+        """ Vrne zacetno in koncno tocko 5 x 5 podpolja s srediscem v koordinati (x, y). """
+        (x, y) = koord
+        v1 = max(0, x - 2)
+        v2 = min(x + 2, self.velikost_matrike - 1)
+        s1 = max(0, y - 2)
+        s2 = min(y + 2, self.velikost_matrike - 1)
+        return (v1, s1), (v2, s2)
 
     def sosedje(self, x, y, zap=True, odp=True):
         """ Vrne sosede polja s koordinatama x, y: če zap = True, vrne zaprte sosede; če odp = True, vrne odprte
@@ -219,9 +209,22 @@ class Racunalnik:
                         zaprti.append(polje)
                     elif polje in self.odprta_polja and odp:
                         odprti.append(polje)
-        if zap and odp: return zaprti, odprti
-        elif zap: return zaprti
-        elif odp: return odprti
+        if zap and odp:
+            return zaprti, odprti
+        elif zap:
+            return zaprti
+        elif odp:
+            return odprti
+
+    def vrni_sosednje_zastave(self, x, y):
+        """ Vrne stevilo trenutnih zastav v okolici polja, podanega z x in y. """
+        zastave = 0
+        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
+            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
+                if z != x or w != y:
+                    if (z, w) in self.zastave:
+                        zastave += 1
+        return zastave
 
     def simuliraj_potezo(self, p):
         (x, y, m) = p

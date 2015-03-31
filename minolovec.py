@@ -129,7 +129,7 @@ class Minesweeper():
         self.odprta_polja = []
         self.zastave = []
 
-        self.prikazi_celotno_polje(True)  # prikazovanje celotnega polja za debugiranje
+        # self.prikazi_celotno_polje(True)  # prikazovanje celotnega polja za debugiranje
 
         if self.pomoc:
             self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
