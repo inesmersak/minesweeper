@@ -159,7 +159,7 @@ class Racunalnik:
         zacasna_zaprta = deepcopy(self.zaprta_polja)  # naredimo kopijo zaprtih polj, ker jih kasneje spreminjamo
         for (x, y) in zacasna_zaprta:
             zaprti_sosedi, odprti_sosedi = self.sosedje(x, y, True, True)
-            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 1:
+            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 2:
                 pass
             else:
                 print("Pregledujemo polje ", x, y)
@@ -203,46 +203,6 @@ class Racunalnik:
         if zap and odp: return zaprti, odprti
         elif zap: return zaprti
         elif odp: return odprti
-
-    def doloci_rob(self):
-        """ Doloci, kje je rob odprtih polj. Zaprto polje je na robu, ce se na vsaj eni izmed stranic tega polja
-        nahajajo tri zaprta polja. """
-        rob = []
-        spodaj = True  # rob je spodaj
-        zgoraj = True  # rob je zgoraj
-        levo = True  # rob je na levi
-        desno = True  # rob je na desni
-        for (x, y) in self.zaprta_polja:
-            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
-                if zgoraj and x - 1 >= 0:
-                    if (x - 1, w) not in self.odprta_polja:
-                        zgoraj = False
-                if spodaj and x + 1 < self.velikost_matrike:
-                    if (x + 1, w) not in self.odprta_polja:
-                        spodaj = False
-            if zgoraj and x == 0: zgoraj = False  # ce je polje na zgornjem robu polja, zgornjega roba nima
-            if spodaj and x == self.velikost_matrike - 1: spodaj = False  # ce je polje na spodnjem robu polja,
-            # spodnjega roba nima
-
-            for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
-                if levo and y - 1 >= 0:
-                    if (z, y - 1) not in self.odprta_polja:
-                        levo = False
-                if desno and y + 1 < self.velikost_matrike:
-                    if (z, y + 1) not in self.odprta_polja:
-                        desno = False
-            if levo and y == 0: levo = False  # ce je polje na levem robu polja, levega roba nima
-            if desno and y == self.velikost_matrike - 1: desno = False  # ce je polje na desnem robu polja,
-            # desnega roba nima
-
-            if spodaj or zgoraj or levo or desno:
-                rob.append((x, y))
-
-            levo = True
-            desno = True
-            spodaj = True
-            zgoraj = True
-        return rob
 
     def simuliraj_potezo(self, p):
         (x, y, m) = p
