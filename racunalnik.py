@@ -4,6 +4,7 @@ from copy import deepcopy
 import time
 import datetime
 
+
 class Racunalnik:
     def __init__(self):
         self.odpri = set()
@@ -16,7 +17,8 @@ class Racunalnik:
         self.zaprta_polja = []
         self.zastave = []
 
-    def pridobi_podatke(self):
+    def pridobi_podatke(self, matrika):
+        self.matrika = matrika
         self.velikost_matrike = len(self.matrika)
         self.odprta_polja = []
         self.zaprta_polja = []
@@ -32,10 +34,8 @@ class Racunalnik:
                     self.zaprta_polja.append((x, y))
 
     def vrni_potezo(self, matrika, mine):
-        self.matrika = matrika
         self.preostale_mine = mine
-        self.pridobi_podatke()
-        # print(self.odpri)
+        self.pridobi_podatke(matrika)
 
         if self.odpri:
             poteza = self.odpri.pop()
@@ -51,7 +51,7 @@ class Racunalnik:
         for (x, y) in self.odprta_polja:
             v = self.matrika[x][y]
             zastave = self.vrni_sosednje_zastave(x, y)
-            sosedi = self.zaprti_sosedje(x, y, True, False)
+            sosedi = self.sosedje(x, y, True, False)
             if v == zastave:
                 for (z, w) in sosedi:
                     self.odpri.add((z, w, False))
@@ -89,17 +89,6 @@ class Racunalnik:
         s2 = min(y + 2, self.velikost_matrike-1)
         return (v1, s1), (v2, s2)
 
-    def preveri_veljavnost_podpolja(self, matrika, zacetek, konec):
-        """ Sprejme matriko, kje zacnemo pregledovati in kje koncamo, ter vrne ali je to podpolje veljavno ali ne. """
-        (v1, s1) = zacetek
-        (v2, s2) = konec
-        for i in range(v1, v2+1):
-            for j in range(s1, s2+1):
-                vrednost = matrika[i][j]
-                if isinstance(vrednost, int):
-                    zastave = self.vrni_sosednje_zastave(i, j)
-                    # if zastave
-
     def preveri_veljavnost_polja(self, zac, kon):
         (i1, j1) = zac
         (i2, j2) = kon
@@ -107,7 +96,7 @@ class Racunalnik:
             for y in range(j1, j2+1):
                 v = self.matrika[x][y]
                 if isinstance(v, int):
-                    zaprti_sosedi = self.zaprti_sosedje(x, y, True, False)
+                    zaprti_sosedi = self.sosedje(x, y, True, False)
                     zastave = self.vrni_sosednje_zastave(x, y)
                     if len(zaprti_sosedi) + zastave < v:
                         return False
@@ -122,6 +111,7 @@ class Racunalnik:
         p = None
         v = 0
         veljavne_komb = []
+        # prej = time.clock()
         for kombinacija in komb:
             if kombinacija.count('f') <= self.preostale_mine:
                 sredinski_kvad = kvad[len(kvad)-1]  # kvadratek v sredini smo v simuliraj dodali na konec kvad
@@ -136,9 +126,9 @@ class Racunalnik:
                     veljavne_komb.append(kombinacija)
                 while poteze_za_razveljavit:
                     self.preklici_potezo(poteze_za_razveljavit.pop())
-                #     zacasna_matrika[x][y] = kombinacija[i]
-                # if self.preveri_veljavnost_podpolja(zacasna_matrika, zac, kon):
-                #     veljavne_komb.append(kombinacija)
+        # potem = time.clock()
+        # print("cas za vse kombinacije: ", potem-prej)
+        # prej = time.clock()
         for i in range(st_polj):
             st_min = 0
             st_odprtih = 0
@@ -157,17 +147,22 @@ class Racunalnik:
                 (z, w) = kvad[i]
                 p = (z, w, False)
                 v = verjetnost
+        # potem = time.clock()
+        # print("cas za verjetnosti potez: ", potem - prej)
         return p, v
 
     def simuliraj(self):
+        prej = time.clock()
         p = self.nakljucna_poteza()
         verjetnost = self.izracunaj_verjetnost(p)
         print(p, verjetnost)
-        for (x, y) in self.zaprta_polja:
-            zaprti_sosedi, odprti_sosedi = self.zaprti_sosedje(x, y, True, True)
-            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 2:
+        zacasna_zaprta = deepcopy(self.zaprta_polja)  # naredimo kopijo zaprtih polj, ker jih kasneje spreminjamo
+        for (x, y) in zacasna_zaprta:
+            zaprti_sosedi, odprti_sosedi = self.sosedje(x, y, True, True)
+            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 1:
                 pass
             else:
+                print("Pregledujemo polje ", x, y)
                 zaprti_sosedi.append((x, y))
                 (p1, verp1) = self.preizkusi_kombinacije(zaprti_sosedi)
                 if verp1 == 1:
@@ -177,7 +172,9 @@ class Racunalnik:
                 elif verp1 > verjetnost:
                     p = p1
                     verjetnost = verp1
+        potem = time.clock()
         print(p, verjetnost)
+        print("Čas za kalkulacijo: ", potem - prej)
         print("---------------------")
         return p
 
@@ -191,18 +188,8 @@ class Racunalnik:
                         zastave += 1
         return zastave
 
-    def vrni_sosednja_polja(self, x, y):
-        """ Vrne koordinate sosednjih polj polja, podanega z x in y. """
-        sosedi = []
-        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
-            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
-                if z != x or w != y:
-                    sosedi.append((z, w))
-        return sosedi
-
-    def zaprti_sosedje(self, x, y, zap=True, odp=True):
+    def sosedje(self, x, y, zap=True, odp=True):
         """ zap = True vrne zaprte, odp = True vrne odprte, zap in odp = True vrne oboje """
-        # sosedi = self.vrni_sosednja_polja(x, y)
         if zap: zaprti = []
         if odp: odprti = []
         for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
@@ -216,17 +203,6 @@ class Racunalnik:
         if zap and odp: return zaprti, odprti
         elif zap: return zaprti
         elif odp: return odprti
-
-    def odprti_sosedje(self, x, y):
-        # sosedi = self.vrni_sosednja_polja(x, y)
-        odprti = []
-        for z in range(max(0, x - 1), min(x + 2, self.velikost_matrike)):
-            for w in range(max(0, y - 1), min(y + 2, self.velikost_matrike)):
-                if z != x or w!= y:
-                    polje = (z, w)
-                    if polje in self.odprta_polja:
-                        odprti.append(polje)
-        return odprti
 
     def doloci_rob(self):
         """ Doloci, kje je rob odprtih polj. Zaprto polje je na robu, ce se na vsaj eni izmed stranic tega polja
