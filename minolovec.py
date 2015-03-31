@@ -75,7 +75,7 @@ class Minesweeper():
         Label(okvir, text='Preostale mine: ').grid(row=2, column=0, sticky='S')
         Label(okvir, textvariable=self.preostale_mine).grid(row=2, column=1, sticky='WS')
 
-        self.poteza_racunalnika = Button(okvir, text='Pomoč računalnika', command=self.prepusti_racunalniku)
+        self.poteza_racunalnika = Button(okvir, text='Namig', command=self.prepusti_racunalniku)
         self.poteza_racunalnika.grid(row=0, column=2, rowspan=3)
 
         self.platno = Canvas(okvir, width=self.velikost*self.kvadratek, height=self.velikost*self.kvadratek,
@@ -129,7 +129,7 @@ class Minesweeper():
         self.odprta_polja = []
         self.zastave = []
 
-        self.prikazi_celotno_polje(True)
+        self.prikazi_celotno_polje(True)  # prikazovanje celotnega polja za debugiranje
 
         if self.pomoc:
             self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
@@ -139,11 +139,18 @@ class Minesweeper():
     # ***********************
 
     def ponastavi(self, *args):
+        """ Ponastavi parametre igre glede na podatke, vnešene v okno z nastavitvami. Klice se ob kliku na gumb 'V
+        redu' ali ob pritisku na <Enter> znotraj okna z nastavitvami. """
         try:
             m = int(self.izbrane_mine.get())
             v = int(self.izbrana_velikost.get())
             if m > v ** 2:
                 messagebox.showerror('Nepravilno število min', 'Vnešeno število min je večje od površine polja!')
+                self.nastavitve.focus()
+                self.izbrana_velikost.focus()
+            elif v > self.maxvelikost:
+                messagebox.showerror('Prevelika velikost polja', 'Prosim, vnesite velikost med 1 in {0}!'.format(
+                    self.maxvelikost))
                 self.nastavitve.focus()
                 self.izbrana_velikost.focus()
             else:
@@ -161,7 +168,7 @@ class Minesweeper():
             self.izbrana_velikost.focus()
 
     def posodobi_max_stevilo_min(self):
-        """ Glede na vneseno velikost polja posodobi zgornjo mejo za stevilo min. """
+        """ Glede na vneseno velikost polja posodobi zgornjo mejo za stevilo min v oknu za nastavitve. """
         velikost = int(self.izbrana_velikost.get())
         self.izbrane_mine.config(to=velikost**2)
 
@@ -191,13 +198,15 @@ class Minesweeper():
 
         self.izbran_igralec = IntVar()
         self.izbran_igralec.set(1 if self.pomoc else 0)
-        Checkbutton(self.nastavitve, text='Reševanje s pomočjo računalnika', var=self.izbran_igralec).grid(row=2, column=0, columnspan=2)
+        Checkbutton(self.nastavitve, text='Igro naj rešuje računalnik', var=self.izbran_igralec).grid(row=2, column=0,
+                                                                                                      columnspan=2)
 
         Button(self.nastavitve, text='V redu', command=self.ponastavi).grid(row=3, column=1)
 
         self.nastavitve.bind("<Return>", self.ponastavi)
 
     def izhod(self, *args):
+        """ Poskrbi za unicenje threada in glavnega okna ob izhodu iz igre. """
         if self.vlakno is not None:
             self.vlakno.join()
         self.master.destroy()
@@ -207,18 +216,22 @@ class Minesweeper():
     # ***********************
 
     def poteza(self, p):
+        """ Sprejme potezo p in jo izvede. """
         (x, y, m) = p
         if self.gameactive:
             if m:  # če je m True, je uporabnik kliknil z desno tipko, torej oznacimo polje z zastavo
                 ozn = self.polje[x][y].oznaci()
-                if ozn:
+                if ozn:  # polje smo uspesno oznacili
                     self.narisi_mino(x, y)
+                    mine = self.preostale_mine.get()
                     if (x, y) in self.zastave:
                         self.zastave.remove((x, y))
                         self.zaprta_polja.append((x, y))
+                        self.preostale_mine.set(mine + 1)
                     else:
                         self.zaprta_polja.remove((x, y))
                         self.zastave.append((x, y))
+                        self.preostale_mine.set(mine - 1)
                     self.preveri()
             else:  # sicer polje odpremo
                 if not self.polje[x][y].flagged:
@@ -226,7 +239,8 @@ class Minesweeper():
                     self.preveri()
 
             if self.gameactive and self.pomoc:
-                self.platno.after(self.zakasnitev, self.prepusti_racunalniku)
+                self.platno.after(self.zakasnitev, self.prepusti_racunalniku)  # ce igro resuje racunalnik,
+                # potem ponovno poklicemo metodo, ki od racunalnika pridobi novo potezo
 
     def odpri_blok(self, koord):
         """ Sprejme tuple koord s koordinatami, kamor je uporabnik levo-kliknil (kjer je prazno polje), in odpre vsa
@@ -239,6 +253,9 @@ class Minesweeper():
             odpr = self.polje[x][y].odpri()
             if odpr:
                 self.narisi_polje(x, y)
+                if self.polje[x][y].prikaz == 'x':
+                    self.preveri(mina=True)
+                    break
                 self.zaprta_polja.remove((x, y))
                 self.odprta_polja.append((x, y))
             checked.append((x, y))
@@ -255,12 +272,13 @@ class Minesweeper():
         return True
 
     def preveri(self, mina=False):
-        """ Preveri, ali je igre konec. """
+        """ Preveri, ali je igre konec. Neobvezen parameter mina pove, ali je bila metoda poklicana, ker je igralec
+        stopil na mino. """
         polno = self.polno()
         if mina:
             self.gameactive = False
             self.porazi.set(self.porazi.get() + 1)
-        elif polno and self.preostale_mine.get() == 0:
+        elif polno and self.preostale_mine.get() == 0:  # polje je pravilno izpolnjeno
             self.gameactive = False
             self.zmage.set(self.zmage.get() + 1)
 
@@ -271,10 +289,10 @@ class Minesweeper():
     def klik(self, klik):
         """ Metoda, ki je bindana na levi in desni klik miske. Ce igra poteka, naredi potezo glede na to, ali je
         uporabnik kliknil levo ali desno tipko. """
-        if self.gameactive and not self.pomoc:
+        if self.gameactive and not self.pomoc:  # uporabnik lahko klikne, ce igra poteka in ce je ne resuje racunalnik
             y = klik.x // self.kvadratek
             x = klik.y // self.kvadratek
-            if x < self.velikost and y < self.velikost:
+            if x < self.velikost and y < self.velikost:  # uporabnik je kliknil znotraj polja
                 flag = True if klik.num == 3 else False  # ali je uporabnik kliknil z desno ali levo tipko miske
                 self.poteza((x, y, flag))
 
@@ -289,7 +307,7 @@ class Minesweeper():
             self.platno.create_line(0, i * self.kvadratek, self.velikost * self.kvadratek, i * self.kvadratek)
 
     def narisi_polje(self, x, y):
-        """ Narise polje s stevilko. """
+        """ Narise kvadratek s stevilko. """
         kvad = self.izracunaj_kvadratek(x, y)
         self.platno.create_rectangle(*kvad, fill=self.ozadje)
         stevilka = self.polje[x][y].vrednost
@@ -297,7 +315,6 @@ class Minesweeper():
         if stevilka == 'x':
             self.platno.create_rectangle(*kvad, fill='#FF0000')
             self.platno.create_image(sredina, image=self.bomba)
-            self.preveri(mina=True)
         elif stevilka != 0:
             barva = BARVE[stevilka]
             self.platno.create_text(sredina, text=stevilka, font=('Arial', 14, 'bold'), fill=barva)
@@ -305,19 +322,16 @@ class Minesweeper():
     def narisi_mino(self, x, y):
         """ Ali narise ali zbrise zastavico na polje. """
         flag = self.polje[x][y].flagged  # polje smo ze oznacili/odznacili, treba ga je samo se narisat
-        mine = self.preostale_mine.get()
         sredina = self.izracunaj_sredino_kvadratka(x, y)
         if flag:
             kvad = self.izracunaj_kvadratek(x, y)
             self.platno.create_rectangle(*kvad, fill='#FF9696', width=1, outline='#000000')
             self.platno.create_image(sredina, image=self.zastava)
-            self.preostale_mine.set(mine - 1)
         else:
             tag = self.najdi_id(x, y)
             for t in tag:
                 self.platno.delete(t)
             self.platno.delete(self.platno.find_closest(*sredina))
-            self.preostale_mine.set(mine + 1)
 
     # ------ POMOZNE FUNKCIJE ZA RISANJE ------
     def izracunaj_kvadratek(self, x, y):
@@ -352,7 +366,7 @@ class Minesweeper():
     # ***********************
 
     def prepusti_racunalniku(self):
-        """ Pozene vzporedno vlakno, kjer racunalnik racuna potezo. """
+        """ Pozene vzporedni thread, kjer racunalnik racuna potezo. """
         if self.gameactive:
             self.p = None
             if self.inteligenca is None:
@@ -362,7 +376,7 @@ class Minesweeper():
             self.platno.after(self.zakasnitev, self.konec_razmisljanja)
 
     def razmisljaj(self):
-        """ Racunalnik izracuna naslednjo potezo. """
+        """ Racunalnik izracuna naslednjo potezo, ki se spravi v atribut p. """
         m = self.naredi_matriko()
         p = self.inteligenca.vrni_potezo(m, int(self.preostale_mine.get()))
         self.p = p
@@ -370,10 +384,10 @@ class Minesweeper():
 
     def konec_razmisljanja(self):
         """ Preveri, ali je racunalnik ze izracunal potezo. """
-        if self.p is None:
+        if self.p is None:  # racunalnik se ni izracunal poteze
             self.platno.after(self.zakasnitev, self.konec_razmisljanja)
-        else:
-            self.poteza(self.p)
+        else:  # racunalnik je ze izracunal potezo
+            self.poteza(self.p)  # naredimo potezo
             self.p = None
 
     # ***********************
