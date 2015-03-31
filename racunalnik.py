@@ -13,25 +13,25 @@ class Racunalnik:
         self.matrika = []
         self.velikost_matrike = 0
         self.preostale_mine = 0
-        self.odprta_polja = []
-        self.zaprta_polja = []
-        self.zastave = []
+        self.odprta_polja = set()
+        self.zaprta_polja = set()
+        self.zastave = set()
 
     def pridobi_podatke(self, matrika):
         self.matrika = matrika
         self.velikost_matrike = len(self.matrika)
-        self.odprta_polja = []
-        self.zaprta_polja = []
-        self.zastave = []
+        self.odprta_polja = set()
+        self.zaprta_polja = set()
+        self.zastave = set()
         for x in range(self.velikost_matrike):
             for y in range(self.velikost_matrike):
                 v = self.matrika[x][y]
                 if isinstance(v, int):
-                    self.odprta_polja.append((x, y))
+                    self.odprta_polja.add((x, y))
                 elif v == 'f':
-                    self.zastave.append((x, y))
+                    self.zastave.add((x, y))
                 else:
-                    self.zaprta_polja.append((x, y))
+                    self.zaprta_polja.add((x, y))
 
     def vrni_potezo(self, matrika, mine):
         self.preostale_mine = mine
@@ -67,7 +67,7 @@ class Racunalnik:
                     self.odpri.add((z, w, False))
 
     def nakljucna_poteza(self):
-        (x, y) = random.choice(self.zaprta_polja)
+        (x, y) = random.choice(list(self.zaprta_polja))
         return tuple([x, y, False])
 
     def izracunaj_verjetnost(self, p):
@@ -156,10 +156,10 @@ class Racunalnik:
         p = self.nakljucna_poteza()
         verjetnost = self.izracunaj_verjetnost(p)
         print(p, verjetnost)
-        zacasna_zaprta = deepcopy(self.zaprta_polja)  # naredimo kopijo zaprtih polj, ker jih kasneje spreminjamo
-        for (x, y) in zacasna_zaprta:
+        # zacasna_zaprta = deepcopy(self.zaprta_polja)  # naredimo kopijo zaprtih polj, ker jih kasneje spreminjamo
+        for (x, y) in self.zaprta_polja:
             zaprti_sosedi, odprti_sosedi = self.sosedje(x, y, True, True)
-            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 2:
+            if len(zaprti_sosedi) == 8 or len(odprti_sosedi) < 1:
                 pass
             else:
                 print("Pregledujemo polje ", x, y)
@@ -211,11 +211,11 @@ class Racunalnik:
             self.zaprta_polja.remove((x, y))
             if m:
                 self.matrika[x][y] = 'f'
-                self.zastave.append((x, y))
+                self.zastave.add((x, y))
                 self.preostale_mine -= 1
             else:
                 self.matrika[x][y] = 'e'  # 'e' bo oznaceval odprto polje, katerega vrednost ne poznamo
-                self.odprta_polja.append((x, y))
+                self.odprta_polja.add((x, y))
 
     def preklici_potezo(self, p):
         (x, y, m) = p
@@ -227,4 +227,4 @@ class Racunalnik:
             else:
                 self.odprta_polja.remove((x, y))
             self.matrika[x][y] = ''
-            self.zaprta_polja.append((x, y))
+            self.zaprta_polja.add((x, y))
